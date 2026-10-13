@@ -36,3 +36,13 @@ Liquibase, changelog: `backend/src/main/resources/db/changelog/db.changelog-mast
 Он подключает все файлы из `changes/` в алфавитном порядке — новое изменение схемы добавляйте
 отдельным файлом (`002-....yaml`, `003-....yaml`). Уже применённые changeset'ы не редактируйте.
 Hibernate работает в режиме `ddl-auto: validate` — схему меняет только Liquibase.
+
+## Git
+
+После клонирования подключите хуки репозитория:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Рабочая ветка — `dev`.

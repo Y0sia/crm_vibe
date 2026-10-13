@@ -1,0 +1,8 @@
+#!/bin/sh
+# Удаляет из сообщения коммита трейлеры и подписи ИИ-ассистентов.
+msg_file="$1"
+tmp="$msg_file.tmp"
+grep -viE '^co-authored-by:.*(claude|anthropic)|generated with .*claude|noreply@anthropic\.com' "$msg_file" > "$tmp"
+# Убираем пустые строки в конце, оставшиеся после удаления трейлера.
+awk 'NF {for (i = 0; i < blank; i++) print ""; blank = 0; print; next} {blank++}' "$tmp" > "$msg_file"
+rm -f "$tmp"
