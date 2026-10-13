@@ -1,0 +1,8 @@
+# Начальный changeset. Новые изменения схемы — отдельными файлами: 002-..., 003-...
+databaseChangeLog:
+  - changeSet:
+      id: 001-init
+      author: crm
+      changes:
+        - tagDatabase:
+            tag: v0.0.1
