@@ -502,6 +502,25 @@ button:disabled {
   color: var(--ink);
 }
 
+/* Своя стрелка у выпадающих списков: с отступом от края, одинаковая во всех браузерах. */
+.select,
+.status-select,
+.inline-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235B6270' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 16px;
+  background-position: right 12px center;
+  padding-right: 38px;
+  cursor: pointer;
+}
+
+.status-select {
+  background-position: right 10px center;
+  background-size: 14px;
+  padding-right: 32px;
+}
+
 .input.invalid {
   border-color: var(--danger);
 }
@@ -615,7 +634,7 @@ button:disabled {
 
 .status-select {
   min-height: 32px;
-  padding: 0 10px;
+  padding-left: 12px;
   border-radius: 999px;
   border: 0;
   font-size: 13px;
@@ -712,6 +731,34 @@ button:disabled {
   text-align: center;
   color: var(--muted);
   font-size: 14px;
+}
+
+/* ---------- окна ---------- */
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(20, 23, 28, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.dialog {
+  width: 440px;
+  max-width: 100%;
+  box-shadow: 0 16px 40px rgba(20, 23, 28, 0.24);
+}
+
+.filter-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 0;
+  background: var(--track);
+  font-size: 18px;
 }
 
 /* ---------- всплывающие сообщения ---------- */

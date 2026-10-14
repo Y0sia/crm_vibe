@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react'
 import { ApiError } from '../../api/client'
 import { useStatusMutations, useStatuses } from '../../api/hooks'
 import type { Status, StatusColor } from '../../api/types'
@@ -31,12 +31,64 @@ export function StatusesPage() {
     )
   }
 
-  const move = (index: number, delta: number) => {
-    const ids = statuses.map((s) => s.id)
+  // Перетаскивание: пока строку тянут, порядок живёт локально; на сервер уходит после отпускания.
+  const [dragOrder, setDragOrder] = useState<number[] | null>(null)
+  const [dragId, setDragId] = useState<number | null>(null)
+  const orderRef = useRef<number[] | null>(null)
+  const rowRefs = useRef(new Map<number, HTMLDivElement>())
+  const ordered = dragOrder
+    ? dragOrder.map((id) => statuses.find((x) => x.id === id)).filter((x): x is Status => !!x)
+    : statuses
+
+  const setOrder = (ids: number[] | null) => {
+    orderRef.current = ids
+    setDragOrder(ids)
+  }
+
+  const commit = (ids: number[]) => {
+    const changed = ids.some((id, i) => statuses[i]?.id !== id)
+    if (!changed) {
+      setOrder(null)
+      return
+    }
+    m.reorder.mutate(ids, { onError: toast.error, onSettled: () => setOrder(null) })
+  }
+
+  const startDrag = (id: number, e: PointerEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    setDragId(id)
+    setOrder(statuses.map((x) => x.id))
+  }
+
+  const dragMove = (e: PointerEvent<HTMLButtonElement>) => {
+    const ids = orderRef.current
+    if (dragId == null || !ids) return
+    const others = ids.filter((id) => id !== dragId)
+    // новое место — после всех строк, середина которых выше указателя
+    const target = others.filter((id) => {
+      const rect = rowRefs.current.get(id)?.getBoundingClientRect()
+      return rect ? rect.top + rect.height / 2 < e.clientY : false
+    }).length
+    const next = [...others.slice(0, target), dragId, ...others.slice(target)]
+    if (next.some((id, i) => id !== ids[i])) setOrder(next)
+  }
+
+  const endDrag = () => {
+    if (dragId == null) return
+    setDragId(null)
+    if (orderRef.current) commit(orderRef.current)
+  }
+
+  const moveByKey = (index: number, e: KeyboardEvent<HTMLButtonElement>) => {
+    const delta = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0
     const j = index + delta
-    if (j < 0 || j >= ids.length) return
+    if (!delta || j < 0 || j >= statuses.length) return
+    e.preventDefault()
+    const ids = statuses.map((x) => x.id)
     ;[ids[index], ids[j]] = [ids[j], ids[index]]
-    m.reorder.mutate(ids, { onError: toast.error })
+    setOrder(ids)
+    commit(ids)
   }
 
   const remove = (s: Status) => {
@@ -86,22 +138,26 @@ export function StatusesPage() {
           <span>№</span>
           <span>Статус</span>
           <span style={{ textAlign: 'right' }}>Лидов</span>
-          <span style={{ textAlign: 'right' }}>Действия</span>
+          <span />
         </div>
-        {statuses.map((s, i) => (
+        {ordered.map((s, i) => (
           <StatusRow
             key={s.id}
             status={s}
             index={i}
-            last={i === statuses.length - 1}
-            onMove={move}
+            dragging={dragId === s.id}
+            rowRef={(el) => (el ? rowRefs.current.set(s.id, el) : rowRefs.current.delete(s.id))}
+            onGripDown={(e) => startDrag(s.id, e)}
+            onGripMove={dragMove}
+            onGripUp={endDrag}
+            onGripKey={(e) => moveByKey(i, e)}
             onRemove={remove}
             onlyOne={statuses.length === 1}
           />
         ))}
         <div className="note">
-          Меняйте порядок стрелками. При удалении статуса его лиды переходят в «{statuses[0]?.name ?? '—'}» (или в
-          следующий, если удаляется первый). Статус «Сделка» считается на дашборде как сделка, даже если его переименовать.
+          Перетащите строку за ручку <Icon name="grip" size={12} />, чтобы поменять порядок. При удалении статуса его лиды
+          переходят в «{statuses[0]?.name ?? '—'}» (или в следующий, если удаляется первый). Статус «Сделка» считается на дашборде как сделка, даже если его переименовать.
         </div>
       </section>
     </div>
@@ -111,15 +167,23 @@ export function StatusesPage() {
 function StatusRow({
   status: s,
   index,
-  last,
-  onMove,
+  dragging,
+  rowRef,
+  onGripDown,
+  onGripMove,
+  onGripUp,
+  onGripKey,
   onRemove,
   onlyOne,
 }: {
   status: Status
   index: number
-  last: boolean
-  onMove: (index: number, delta: number) => void
+  dragging: boolean
+  rowRef: (el: HTMLDivElement | null) => void
+  onGripDown: (e: PointerEvent<HTMLButtonElement>) => void
+  onGripMove: (e: PointerEvent<HTMLButtonElement>) => void
+  onGripUp: () => void
+  onGripKey: (e: KeyboardEvent<HTMLButtonElement>) => void
   onRemove: (s: Status) => void
   onlyOne: boolean
 }) {
@@ -146,9 +210,21 @@ function StatusRow({
   }
 
   return (
-    <div className="status-grid">
-      <div className="status-n num" style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--muted-2)', fontWeight: 700, fontSize: 13 }}>
-        {index + 1}
+    <div className={`status-grid${dragging ? ' dragging' : ''}`} ref={rowRef}>
+      <div className="status-n num">
+        <button
+          type="button"
+          className="grip"
+          aria-label={`Перетащить статус «${s.name}». Стрелки вверх и вниз меняют порядок`}
+          onPointerDown={onGripDown}
+          onPointerMove={onGripMove}
+          onPointerUp={onGripUp}
+          onPointerCancel={onGripUp}
+          onKeyDown={onGripKey}
+        >
+          <Icon name="grip" size={16} />
+        </button>
+        <span className="only-desktop">{index + 1}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
         <span className="dot" style={{ width: 12, height: 12, background: c.dot }} />
@@ -169,12 +245,6 @@ function StatusRow({
         {s.leadCount} <span className="only-mobile">{plural(s.leadCount, 'лид', 'лида', 'лидов')}</span>
       </span>
       <div className="status-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
-        <button type="button" className="btn btn-square" aria-label="Поднять выше" disabled={index === 0} onClick={() => onMove(index, -1)}>
-          ↑
-        </button>
-        <button type="button" className="btn btn-square" aria-label="Опустить ниже" disabled={last} onClick={() => onMove(index, 1)}>
-          ↓
-        </button>
         <button type="button" className="btn btn-square btn-danger" aria-label="Удалить статус" disabled={onlyOne} onClick={() => onRemove(s)}>
           <Icon name="trash" size={16} />
         </button>

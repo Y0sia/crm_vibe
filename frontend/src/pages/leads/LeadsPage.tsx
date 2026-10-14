@@ -63,7 +63,7 @@ export function LeadsPage() {
         <div className="only-desktop">
           <h1 className="page-title">Лиды</h1>
           <div className="page-subtitle">
-            Найдено {found} из {total} · новые заявки из Telegram появляются здесь автоматически
+            Найдено {found} из {total}
           </div>
         </div>
         <button

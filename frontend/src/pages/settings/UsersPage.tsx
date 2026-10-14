@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { ApiError } from '../../api/client'
 import { useMe, useUserMutations, useUsers } from '../../api/hooks'
 import type { Role, User } from '../../api/types'
+import { Dialog } from '../../components/Dialog'
 import { useToast } from '../../components/Toast'
 import { formatDateLong } from '../../lib/format'
 import './settings.css'
@@ -123,21 +124,13 @@ function UserRow({ user: u }: { user: User }) {
   const [name, setName] = useState(u.displayName)
   const [role, setRole] = useState<Role>(u.role)
   const self = me?.id === u.id
+  const [passwordOpen, setPasswordOpen] = useState(false)
 
   const save = () =>
     m.update.mutate(
       { id: u.id, displayName: name.trim(), role },
       { onSuccess: () => (setEditing(false), toast.show('Сохранено')), onError: toast.error },
     )
-
-  const changePassword = () => {
-    const password = window.prompt(`Новый пароль для ${u.displayName} (не короче 8 символов):`)
-    if (password == null) return
-    m.password.mutate(
-      { id: u.id, password },
-      { onSuccess: () => toast.show('Пароль изменён. Пользователю нужно войти заново.'), onError: toast.error },
-    )
-  }
 
   const toggleBlock = () => {
     if (u.active) {
@@ -207,8 +200,8 @@ function UserRow({ user: u }: { user: User }) {
               <button type="button" className="btn btn-sm" onClick={() => setEditing(true)}>
                 Изменить
               </button>
-              <button type="button" className="btn btn-sm" onClick={changePassword}>
-                Пароль
+              <button type="button" className="btn btn-sm" onClick={() => setPasswordOpen(true)}>
+                Сменить пароль
               </button>
               {!self && (
                 <button type="button" className={`btn btn-sm${u.active ? ' btn-danger' : ''}`} onClick={toggleBlock}>
@@ -218,7 +211,75 @@ function UserRow({ user: u }: { user: User }) {
             </>
           )}
         </div>
+        {passwordOpen && <PasswordDialog user={u} self={self} onClose={() => setPasswordOpen(false)} />}
       </td>
     </tr>
+  )
+}
+
+function PasswordDialog({ user, self, onClose }: { user: User; self: boolean; onClose: () => void }) {
+  const { password } = useUserMutations()
+  const toast = useToast()
+  const [value, setValue] = useState('')
+  const [visible, setVisible] = useState(false)
+  const error = password.error instanceof ApiError ? password.error : null
+  const tooShort = value.length > 0 && value.length < 8
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    password.mutate(
+      { id: user.id, password: value },
+      {
+        onSuccess: () => {
+          toast.show(
+            self
+              ? 'Пароль изменён. На других устройствах нужно будет войти заново.'
+              : `Пароль для ${user.displayName} изменён. Передайте его сотруднику.`,
+          )
+          onClose()
+        },
+      },
+    )
+  }
+
+  return (
+    <Dialog title={`Новый пароль — ${user.displayName}`} onClose={onClose}>
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }} noValidate>
+        <label className="field">
+          Новый пароль
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              className={`input${error?.fields.password ? ' invalid' : ''}`}
+              type={visible ? 'text' : 'password'}
+              autoComplete="new-password"
+              autoFocus
+              maxLength={72}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+            />
+            <button type="button" className="btn btn-sm" style={{ minHeight: 44 }} onClick={() => setVisible(!visible)}>
+              {visible ? 'Скрыть' : 'Показать'}
+            </button>
+          </div>
+          <span className={error?.fields.password || tooShort ? 'field-error' : 'muted'} style={{ fontWeight: 500 }}>
+            {error?.fields.password ?? 'Не короче 8 символов'}
+          </span>
+        </label>
+        {error && !error.fields.password && <div className="form-error">{error.message}</div>}
+        <div className="muted" style={{ fontSize: 13 }}>
+          {self
+            ? 'Вы останетесь в системе на этом устройстве, на остальных потребуется войти заново.'
+            : 'Сотрудника выведет из системы на всех устройствах — дальше он входит с новым паролем.'}
+        </div>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button type="button" className="btn" onClick={onClose}>
+            Отмена
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={value.length < 8 || password.isPending}>
+            {password.isPending ? 'Сохраняем…' : 'Сохранить пароль'}
+          </button>
+        </div>
+      </form>
+    </Dialog>
   )
 }

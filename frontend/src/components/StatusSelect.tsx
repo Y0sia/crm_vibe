@@ -24,7 +24,7 @@ export function StatusSelect({
       value={value}
       disabled={disabled}
       onChange={(e) => onChange(Number(e.target.value))}
-      style={{ background: colors.bg, color: colors.fg }}
+      style={{ backgroundColor: colors.bg, color: colors.fg }}
     >
       {statuses.map((s) => (
         <option key={s.id} value={s.id}>

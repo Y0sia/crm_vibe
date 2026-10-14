@@ -78,14 +78,7 @@ export function DashboardPage() {
           <div className="grid-2">
             <NewLeadsChart days={d.newLeadsByDay} />
             <section className="card" aria-label="Лиды по статусам">
-              <div className="card-head">
-                <h2 className="card-title">Лиды по статусам</h2>
-                {isAdmin && (
-                  <Link to="/settings/statuses" className="card-link">
-                    Настроить статусы
-                  </Link>
-                )}
-              </div>
+              <h2 className="card-title">Лиды по статусам</h2>
               <HBars
                 rows={d.byStatus.map((s) => ({ key: s.statusId, label: s.name, value: s.count, color: STATUS_COLORS[s.color].dot }))}
                 labelWidth={130}
@@ -127,7 +120,8 @@ function NewLeadsChart({ days }: { days: Dashboard['newLeadsByDay'] }) {
   const max = Math.max(1, ...days.map((d) => d.count))
   const total = days.reduce((s, d) => s + d.count, 0)
   const showValues = days.length <= (isMobile ? 14 : 31)
-  const labelEvery = Math.ceil(days.length / (isMobile ? 7 : 14))
+  // подпись «17 сен» шире столбика — показываем каждую n-ю, считая от сегодняшнего дня
+  const labelEvery = Math.ceil(days.length / (isMobile ? 4 : 8))
   const gap = days.length > 31 ? 2 : days.length > 14 ? 4 : 8
   return (
     <section className="card" aria-label="Новые лиды по дням">
@@ -152,8 +146,8 @@ function NewLeadsChart({ days }: { days: Dashboard['newLeadsByDay'] }) {
       </div>
       <div className="bar-labels" style={{ gap }}>
         {days.map((d, i) => (
-          <span key={d.date} className="num">
-            {(days.length - 1 - i) % labelEvery === 0 ? formatShortDay(d.date).split(' ')[0] : ''}
+          <span key={d.date} className="num" style={i === days.length - 1 ? { justifyContent: 'flex-end' } : undefined}>
+            {(days.length - 1 - i) % labelEvery === 0 ? formatShortDay(d.date) : ''}
           </span>
         ))}
       </div>

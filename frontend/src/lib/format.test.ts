@@ -5,6 +5,7 @@ import {
   formatDuration,
   formatMessageDate,
   formatPhone,
+  formatShortDay,
   formatTelegramId,
   formatTime,
   initials,
@@ -32,6 +33,10 @@ describe('formatDateLong и formatDayHeading', () => {
     expect(formatDayHeading(new Date(2026, 9, 14, 1, 0).toISOString(), now)).toBe('Сегодня')
     expect(formatDayHeading(new Date(2026, 9, 13, 23, 0).toISOString(), now)).toBe('Вчера')
     expect(formatDayHeading(new Date(2026, 9, 1, 12, 0).toISOString(), now)).toBe('1 октября')
+  })
+  it('короткий день для графика', () => {
+    expect(formatShortDay('2026-09-17')).toBe('17 сен')
+    expect(formatShortDay('2026-10-02')).toBe('2 окт')
   })
   it('время', () => {
     expect(formatTime(new Date(2026, 9, 13, 9, 7).toISOString())).toBe('09:07')
