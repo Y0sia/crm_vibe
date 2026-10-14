@@ -28,3 +28,8 @@ management:
     web:
       exposure:
         include: health,info
+
+crm:
+  admin:
+    login: ${CRM_ADMIN_LOGIN:}
+    password: ${CRM_ADMIN_PASSWORD:}
