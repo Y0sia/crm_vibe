@@ -31,6 +31,7 @@
 }
 
 .bars {
+  position: relative;
   display: flex;
   align-items: flex-end;
   height: 220px;
@@ -116,4 +117,38 @@
   .bars {
     height: 160px;
   }
+}
+
+.bar-col {
+  cursor: default;
+  border-radius: 6px;
+}
+
+.bar-col.hovered {
+  background: var(--subtle);
+}
+
+.bar-col.hovered .bar {
+  filter: brightness(0.85);
+}
+
+.chart-tip {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(20, 23, 28, 0.2);
+}
+
+.chart-tip .muted {
+  color: #b9bec8;
+  font-size: 12px;
 }

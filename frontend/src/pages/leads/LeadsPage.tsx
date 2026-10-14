@@ -1,19 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams, type To } from 'react-router'
-import { useLeads, useLeadsInfinite, useManagers, useSetLeadStatus, useStatuses, useTags } from '../../api/hooks'
-import type { LeadListItem, LeadPage, Status } from '../../api/types'
+import { useLeadsInfinite, useManagers, useSetLeadStatus, useStatuses, useTags } from '../../api/hooks'
+import type { LeadListItem, Status } from '../../api/types'
 import { Icon } from '../../components/Icon'
 import { StatusSelect } from '../../components/StatusSelect'
 import { TagLabel } from '../../components/TagLabel'
 import { useToast } from '../../components/Toast'
 import { formatMessageDate } from '../../lib/format'
-import { countActive, filtersToSearch, parseFilters, parsePage, type LeadFilters as Filters } from '../../lib/leadFilter'
+import { countActive, filtersToSearch, parseFilters, type LeadFilters as Filters } from '../../lib/leadFilter'
 import { sourceLabel } from '../../lib/palette'
+import { useInfiniteScroll } from '../../lib/useInfiniteScroll'
 import { MOBILE, useMediaQuery } from '../../lib/useMediaQuery'
 import { LeadFilters } from './LeadFilters'
 import './leads.css'
-
-const PAGE_SIZE = 25
 
 function useDebounced<T>(value: T, ms: number) {
   const [debounced, setDebounced] = useState(value)
@@ -27,7 +26,6 @@ function useDebounced<T>(value: T, ms: number) {
 export function LeadsPage() {
   const [search, setSearch] = useSearchParams()
   const filters = useMemo(() => parseFilters(search), [search])
-  const page = parsePage(search)
   const isMobile = useMediaQuery(MOBILE)
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState(filters.q)
@@ -48,14 +46,17 @@ export function LeadsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQ])
 
-  const paged = useLeads(filters, page, PAGE_SIZE)
-  const infinite = useLeadsInfinite(filters, isMobile)
-  const data: LeadPage | undefined = isMobile ? infinite.data?.pages.at(-1) : paged.data
-  const rows: LeadListItem[] = isMobile ? (infinite.data?.pages.flatMap((p) => p.items) ?? []) : (paged.data?.items ?? [])
+  // Бесконечная прокрутка: следующие 25 лидов подгружаются, когда список докручен до конца.
+  const leads = useLeadsInfinite(filters, true)
+  const data = leads.data?.pages.at(-1)
+  const rows: LeadListItem[] = leads.data?.pages.flatMap((p) => p.items) ?? []
   const found = data?.found ?? 0
   const total = data?.total ?? 0
   const active = countActive(filters)
-  const loading = isMobile ? infinite.isPending : paged.isPending
+  const loading = leads.isPending
+  const sentinel = useInfiniteScroll(() => {
+    if (leads.hasNextPage && !leads.isFetchingNextPage) leads.fetchNextPage()
+  }, !!leads.hasNextPage)
 
   return (
     <>
@@ -111,9 +112,6 @@ export function LeadsPage() {
           active={active}
           loading={loading}
           onOpenFilters={() => setOpen(true)}
-          hasMore={!!infinite.hasNextPage}
-          loadingMore={infinite.isFetchingNextPage}
-          onMore={() => infinite.fetchNextPage()}
           onReset={reset}
         />
       ) : (
@@ -141,8 +139,19 @@ export function LeadsPage() {
             </table>
           </div>
           {!loading && rows.length === 0 && <EmptyState total={total} onReset={reset} />}
-          <Pager page={page} found={found} shown={rows.length} onPage={(p) => setSearch(filtersToSearch(filters, p))} />
+          <div className="pager">
+            <span>
+              Показано {rows.length} из {found}
+            </span>
+            {leads.isFetchingNextPage && <span>Загружаем ещё…</span>}
+          </div>
         </section>
+      )}
+      <div ref={sentinel} aria-hidden="true" />
+      {isMobile && leads.isFetchingNextPage && (
+        <div className="muted" style={{ textAlign: 'center', fontSize: 14 }}>
+          Загружаем ещё…
+        </div>
       )}
     </>
   )
@@ -238,39 +247,6 @@ function EmptyState({ total, onReset }: { total: number; onReset: () => void }) 
   )
 }
 
-function Pager({ page, found, shown, onPage }: { page: number; found: number; shown: number; onPage: (p: number) => void }) {
-  const pages = Math.max(1, Math.ceil(found / PAGE_SIZE))
-  const windowStart = Math.max(0, Math.min(page - 2, pages - 5))
-  const numbers = Array.from({ length: Math.min(5, pages) }, (_, i) => windowStart + i)
-  return (
-    <div className="pager">
-      <span>
-        Показано {shown} · {PAGE_SIZE} на странице
-      </span>
-      {pages > 1 && (
-        <div className="pager-buttons">
-          <button type="button" aria-label="Предыдущая страница" disabled={page === 0} onClick={() => onPage(page - 1)}>
-            ‹
-          </button>
-          {numbers.map((n) => (
-            <button key={n} type="button" aria-current={n === page ? 'page' : undefined} onClick={() => onPage(n)}>
-              {n + 1}
-            </button>
-          ))}
-          <button
-            type="button"
-            aria-label="Следующая страница"
-            disabled={page >= pages - 1}
-            onClick={() => onPage(page + 1)}
-          >
-            ›
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
 function MobileList(props: {
   rows: LeadListItem[]
   statuses: Status[]
@@ -279,9 +255,6 @@ function MobileList(props: {
   active: number
   loading: boolean
   onOpenFilters: () => void
-  hasMore: boolean
-  loadingMore: boolean
-  onMore: () => void
   onReset: () => void
 }) {
   const { rows, statuses, found, total, active, loading } = props
@@ -304,11 +277,6 @@ function MobileList(props: {
         <div className="card">
           <EmptyState total={total} onReset={props.onReset} />
         </div>
-      )}
-      {props.hasMore && (
-        <button type="button" className="btn" style={{ minHeight: 48 }} disabled={props.loadingMore} onClick={props.onMore}>
-          {props.loadingMore ? 'Загружаем…' : 'Показать ещё'}
-        </button>
       )}
     </>
   )

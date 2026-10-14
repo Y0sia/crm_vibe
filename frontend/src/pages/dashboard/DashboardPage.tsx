@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { useDashboard, useMe } from '../../api/hooks'
 import type { Dashboard } from '../../api/types'
 import { TagLabel } from '../../components/TagLabel'
-import { addDays, formatDuration, formatShortDay, localDateISO, plural } from '../../lib/format'
+import { addDays, formatChartDay, formatDuration, formatShortDay, localDateISO, plural } from '../../lib/format'
 import { STATUS_COLORS, sourceColor, sourceLabel } from '../../lib/palette'
 import { MOBILE, useMediaQuery } from '../../lib/useMediaQuery'
 import './dashboard.css'
@@ -115,14 +115,23 @@ export function DashboardPage() {
   )
 }
 
+// самый высокий столбик — 65% высоты графика, чтобы над ним помещалась плашка с подсказкой
+const BAR_MAX = 65
+
 function NewLeadsChart({ days }: { days: Dashboard['newLeadsByDay'] }) {
   const isMobile = useMediaQuery(MOBILE)
+  const [hover, setHover] = useState<number | null>(null)
   const max = Math.max(1, ...days.map((d) => d.count))
   const total = days.reduce((s, d) => s + d.count, 0)
   const showValues = days.length <= (isMobile ? 14 : 31)
   // подпись «17 сен» шире столбика — показываем каждую n-ю, считая от сегодняшнего дня
   const labelEvery = Math.ceil(days.length / (isMobile ? 4 : 8))
   const gap = days.length > 31 ? 2 : days.length > 14 ? 4 : 8
+  const active = hover == null ? null : days[hover]
+  // плашка не должна вылезать за края графика
+  const tipLeft = hover == null ? 0 : ((hover + 0.5) / days.length) * 100
+  const tipAlign = tipLeft < 15 ? '0%' : tipLeft > 85 ? '-100%' : '-50%'
+
   return (
     <section className="card" aria-label="Новые лиды по дням">
       <div className="card-head">
@@ -131,14 +140,36 @@ function NewLeadsChart({ days }: { days: Dashboard['newLeadsByDay'] }) {
           {total} {plural(total, 'лид', 'лида', 'лидов')} за {days.length} {plural(days.length, 'день', 'дня', 'дней')}
         </span>
       </div>
-      <div className="bars" style={{ gap }}>
+      <div className="bars" style={{ gap }} onMouseLeave={() => setHover(null)}>
+        {active && (
+          <div
+            className="chart-tip"
+            style={{
+              left: `${tipLeft}%`,
+              // над вершиной наведённого столбика (и над цифрой над ним)
+              bottom: `calc(${(active.count / max) * BAR_MAX}% + ${showValues ? 26 : 10}px)`,
+              transform: `translateX(${tipAlign})`,
+            }}
+            role="status"
+          >
+            <span className="muted">{formatChartDay(active.date)}</span>
+            <b className="num">
+              {active.count} {plural(active.count, 'новый лид', 'новых лида', 'новых лидов')}
+            </b>
+          </div>
+        )}
         {days.map((d, i) => (
-          <div key={d.date} className="bar-col" title={`${formatShortDay(d.date)}: ${d.count}`}>
+          <div
+            key={d.date}
+            className={`bar-col${hover === i ? ' hovered' : ''}`}
+            onMouseEnter={() => setHover(i)}
+            onClick={() => setHover(hover === i ? null : i)}
+          >
             {showValues && d.count > 0 && <span className="num">{d.count}</span>}
             {d.count > 0 && (
               <div
                 className="bar"
-                style={{ height: `${(d.count / max) * 80}%`, background: i === days.length - 1 ? '#164C86' : '#2B85DA' }}
+                style={{ height: `${(d.count / max) * BAR_MAX}%`, background: i === days.length - 1 ? '#164C86' : '#2B85DA' }}
               />
             )}
           </div>

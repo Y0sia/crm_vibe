@@ -70,15 +70,6 @@ export const useManagers = () =>
 
 // ---------- лиды ----------
 
-export function useLeads(filters: LeadFilters, page: number, size = 25) {
-  const params = toApiParams(filters, page, size).toString()
-  return useQuery({
-    queryKey: [...keys.leads, params],
-    queryFn: () => api.get<LeadPage>(`/api/leads?${params}`),
-    placeholderData: (previous) => previous,
-  })
-}
-
 export const useNewCount = () =>
   useQuery({ queryKey: keys.newCount, queryFn: () => api.get<{ count: number }>('/api/leads/new-count') })
 
