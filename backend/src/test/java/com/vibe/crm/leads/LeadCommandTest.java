@@ -202,4 +202,28 @@ class LeadCommandTest {
 			.andExpect(jsonPath("$.fields.text").value("Введите сообщение"));
 	}
 
+	@Test
+	void phoneIsNormalizedValidatedAndRecorded() throws Exception {
+		mvc.perform(put("/api/leads/{id}/phone", leadId).cookie(session).with(csrf())
+				.contentType(MediaType.APPLICATION_JSON).content(json("{'phone':'8 (900) 123-45-67'}")))
+			.andExpect(status().isNoContent());
+		mvc.perform(get("/api/leads/{id}", leadId).cookie(session)).andExpect(jsonPath("$.phone").value("+79001234567"));
+
+		mvc.perform(put("/api/leads/{id}/phone", leadId).cookie(session).with(csrf())
+				.contentType(MediaType.APPLICATION_JSON).content(json("{'phone':'12-34'}")))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.fields.phone").value("Телефон: от 7 до 15 цифр"));
+
+		mvc.perform(put("/api/leads/{id}/phone", leadId).cookie(session).with(csrf())
+				.contentType(MediaType.APPLICATION_JSON).content(json("{'phone':'  '}")))
+			.andExpect(status().isNoContent());
+		mvc.perform(get("/api/leads/{id}", leadId).cookie(session)).andExpect(jsonPath("$.phone").doesNotExist());
+
+		mvc.perform(get("/api/leads/{id}/events", leadId).cookie(session))
+			.andExpect(jsonPath("$[0].type").value("PHONE_CHANGED"))
+			.andExpect(jsonPath("$[0].oldValue").value("+79001234567"))
+			.andExpect(jsonPath("$[0].newValue").doesNotExist())
+			.andExpect(jsonPath("$[1].newValue").value("+79001234567"));
+	}
+
 }

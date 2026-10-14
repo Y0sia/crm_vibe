@@ -79,6 +79,36 @@ public class LeadCommandService {
 		changed(lead, LeadEventType.SOURCE_CHANGED, old, LeadSources.label(source));
 	}
 
+	/** Телефон вводит менеджер: «8 (900) 123-45-67» → «+79001234567»; пустое значение — стереть. */
+	public void changePhone(Long leadId, String raw) {
+		Lead lead = queries.get(leadId);
+		String phone = normalizePhone(raw);
+		if (Objects.equals(lead.getPhone(), phone)) {
+			return;
+		}
+		String old = lead.getPhone();
+		lead.setPhone(phone);
+		changed(lead, LeadEventType.PHONE_CHANGED, old, phone);
+	}
+
+	static String normalizePhone(String raw) {
+		if (raw == null || raw.isBlank()) {
+			return null;
+		}
+		String trimmed = raw.trim();
+		if (!trimmed.matches("[+\\d\\s()\\-.]+")) {
+			throw ApiException.badRequest("phone", "Телефон может содержать только цифры, +, пробелы, скобки и дефисы");
+		}
+		String digits = trimmed.replaceAll("\\D", "");
+		if (!trimmed.startsWith("+") && digits.length() == 11 && digits.startsWith("8")) {
+			digits = "7" + digits.substring(1);
+		}
+		if (digits.length() < 7 || digits.length() > 15) {
+			throw ApiException.badRequest("phone", "Телефон: от 7 до 15 цифр");
+		}
+		return "+" + digits;
+	}
+
 	public void addTag(Long leadId, Long tagId) {
 		Lead lead = queries.get(leadId);
 		Tag tag = tags.get(tagId);

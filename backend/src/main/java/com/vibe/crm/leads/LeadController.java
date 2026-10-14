@@ -42,6 +42,9 @@ public class LeadController {
 	public record SourceRequest(LeadSource source) {
 	}
 
+	public record PhoneRequest(String phone) {
+	}
+
 	public record ReplyRequest(@NotBlank(message = "Введите сообщение") @Size(max = 4096,
 			message = "Сообщение: до 4096 символов") String text) {
 	}
@@ -110,6 +113,12 @@ public class LeadController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void source(@PathVariable Long id, @RequestBody SourceRequest body) {
 		commands.changeSource(id, body.source());
+	}
+
+	@PutMapping("/{id}/phone")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void phone(@PathVariable Long id, @RequestBody PhoneRequest body) {
+		commands.changePhone(id, body.phone());
 	}
 
 	@PostMapping("/{id}/tags/{tagId}")
