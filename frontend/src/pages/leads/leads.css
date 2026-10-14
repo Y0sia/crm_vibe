@@ -233,3 +233,11 @@
     min-height: 52px;
   }
 }
+
+.clickable {
+  cursor: pointer;
+}
+
+.lead-card.clickable:hover {
+  border-color: #c4c9d2;
+}

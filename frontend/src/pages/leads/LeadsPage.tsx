@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useSearchParams, type To } from 'react-router'
 import { useLeads, useLeadsInfinite, useManagers, useSetLeadStatus, useStatuses, useTags } from '../../api/hooks'
 import type { LeadListItem, LeadPage, Status } from '../../api/types'
 import { Icon } from '../../components/Icon'
@@ -153,12 +153,24 @@ function useLeadLink() {
   return (id: number) => ({ pathname: `/leads/${id}`, state: { back: location.search } })
 }
 
+/** Клик по всей строке/плашке открывает карточку — кроме кликов по ссылкам и полям выбора внутри неё. */
+function useOpenOnClick(link: { pathname: string; state: unknown }) {
+  const navigate = useNavigate()
+  return (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (target.closest('a, button, select, input, label')) return
+    if (window.getSelection()?.toString()) return
+    navigate(link.pathname as To, { state: link.state })
+  }
+}
+
 function LeadRow({ lead, statuses }: { lead: LeadListItem; statuses: Status[] }) {
   const setStatus = useSetLeadStatus()
   const toast = useToast()
   const link = useLeadLink()(lead.id)
+  const open = useOpenOnClick(link)
   return (
-    <tr>
+    <tr className="clickable" onClick={open}>
       <td>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Link to={link.pathname} state={link.state} className="lead-name">
@@ -306,8 +318,9 @@ function MobileLeadCard({ lead, statuses }: { lead: LeadListItem; statuses: Stat
   const setStatus = useSetLeadStatus()
   const toast = useToast()
   const link = useLeadLink()(lead.id)
+  const open = useOpenOnClick(link)
   return (
-    <article className="lead-card">
+    <article className="lead-card clickable" onClick={open}>
       <div className="lead-card-top">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
           <Link to={link.pathname} state={link.state} className="lead-name">

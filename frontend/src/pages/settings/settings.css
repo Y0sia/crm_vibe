@@ -244,3 +244,25 @@
     width: 100%;
   }
 }
+
+.table.middle td {
+  vertical-align: middle;
+}
+
+.user-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 768px) {
+  .user-actions {
+    justify-content: stretch;
+    flex-wrap: wrap;
+  }
+
+  .user-actions .btn {
+    flex: 1 1 0;
+  }
+}

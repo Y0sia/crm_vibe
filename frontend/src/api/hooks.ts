@@ -113,6 +113,7 @@ export function useLeadMutations(id: number) {
       mutationFn: (source: LeadSource | null) => api.put(`/api/leads/${id}/source`, { source }),
       ...opts,
     }),
+    setPhone: useMutation({ mutationFn: (phone: string | null) => api.put(`/api/leads/${id}/phone`, { phone }), ...opts }),
     addTag: useMutation({ mutationFn: (tagId: number) => api.post(`/api/leads/${id}/tags/${tagId}`), ...opts }),
     removeTag: useMutation({ mutationFn: (tagId: number) => api.delete(`/api/leads/${id}/tags/${tagId}`), ...opts }),
     reply: useMutation({

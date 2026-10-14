@@ -48,3 +48,12 @@ git config core.hooksPath .githooks
 ```
 
 Рабочая ветка — `dev`.
+
+## Демо-данные
+
+```bash
+python3 scripts/demo_data.py          # добавить ~150 демо-лидов с перепиской и историей
+python3 scripts/demo_data.py --clear  # удалить демо-лидов (настоящие лиды не трогаются)
+```
+
+Демо-лиды отличаются Telegram ID в диапазоне 9100000000–9199999999.

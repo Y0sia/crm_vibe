@@ -62,7 +62,7 @@ export type Message = {
   deleted: boolean
 }
 
-export type LeadEventType = 'CREATED' | 'STATUS_CHANGED' | 'MANAGER_CHANGED' | 'SOURCE_CHANGED' | 'TAG_ADDED' | 'TAG_REMOVED'
+export type LeadEventType = 'CREATED' | 'STATUS_CHANGED' | 'MANAGER_CHANGED' | 'SOURCE_CHANGED' | 'TAG_ADDED' | 'TAG_REMOVED' | 'PHONE_CHANGED'
 
 export type LeadEvent = {
   id: number

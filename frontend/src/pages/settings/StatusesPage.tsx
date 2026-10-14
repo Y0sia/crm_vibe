@@ -54,30 +54,35 @@ export function StatusesPage() {
     m.reorder.mutate(ids, { onError: toast.error, onSettled: () => setOrder(null) })
   }
 
+  // Слушаем всю страницу: строка во время перетаскивания переставляется в DOM, и элемент теряет захват указателя.
   const startDrag = (id: number, e: PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return
     e.preventDefault()
-    e.currentTarget.setPointerCapture(e.pointerId)
     setDragId(id)
     setOrder(statuses.map((x) => x.id))
-  }
 
-  const dragMove = (e: PointerEvent<HTMLButtonElement>) => {
-    const ids = orderRef.current
-    if (dragId == null || !ids) return
-    const others = ids.filter((id) => id !== dragId)
-    // новое место — после всех строк, середина которых выше указателя
-    const target = others.filter((id) => {
-      const rect = rowRefs.current.get(id)?.getBoundingClientRect()
-      return rect ? rect.top + rect.height / 2 < e.clientY : false
-    }).length
-    const next = [...others.slice(0, target), dragId, ...others.slice(target)]
-    if (next.some((id, i) => id !== ids[i])) setOrder(next)
-  }
-
-  const endDrag = () => {
-    if (dragId == null) return
-    setDragId(null)
-    if (orderRef.current) commit(orderRef.current)
+    const onMove = (ev: globalThis.PointerEvent) => {
+      const ids = orderRef.current
+      if (!ids) return
+      const others = ids.filter((x) => x !== id)
+      // новое место — после всех строк, середина которых выше указателя
+      const target = others.filter((x) => {
+        const rect = rowRefs.current.get(x)?.getBoundingClientRect()
+        return rect ? rect.top + rect.height / 2 < ev.clientY : false
+      }).length
+      const next = [...others.slice(0, target), id, ...others.slice(target)]
+      if (next.some((x, i) => x !== ids[i])) setOrder(next)
+    }
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      setDragId(null)
+      if (orderRef.current) commit(orderRef.current)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
   }
 
   const moveByKey = (index: number, e: KeyboardEvent<HTMLButtonElement>) => {
@@ -148,8 +153,6 @@ export function StatusesPage() {
             dragging={dragId === s.id}
             rowRef={(el) => (el ? rowRefs.current.set(s.id, el) : rowRefs.current.delete(s.id))}
             onGripDown={(e) => startDrag(s.id, e)}
-            onGripMove={dragMove}
-            onGripUp={endDrag}
             onGripKey={(e) => moveByKey(i, e)}
             onRemove={remove}
             onlyOne={statuses.length === 1}
@@ -170,8 +173,6 @@ function StatusRow({
   dragging,
   rowRef,
   onGripDown,
-  onGripMove,
-  onGripUp,
   onGripKey,
   onRemove,
   onlyOne,
@@ -181,8 +182,6 @@ function StatusRow({
   dragging: boolean
   rowRef: (el: HTMLDivElement | null) => void
   onGripDown: (e: PointerEvent<HTMLButtonElement>) => void
-  onGripMove: (e: PointerEvent<HTMLButtonElement>) => void
-  onGripUp: () => void
   onGripKey: (e: KeyboardEvent<HTMLButtonElement>) => void
   onRemove: (s: Status) => void
   onlyOne: boolean
@@ -217,9 +216,6 @@ function StatusRow({
           className="grip"
           aria-label={`Перетащить статус «${s.name}». Стрелки вверх и вниз меняют порядок`}
           onPointerDown={onGripDown}
-          onPointerMove={onGripMove}
-          onPointerUp={onGripUp}
-          onPointerCancel={onGripUp}
           onKeyDown={onGripKey}
         >
           <Icon name="grip" size={16} />

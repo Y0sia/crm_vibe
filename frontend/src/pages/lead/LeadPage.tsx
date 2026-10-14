@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { ApiError } from '../../api/client'
-import { useLead, useLeadEvents, useLeadMessages, useLeadMutations, useManagers, useMe, useStatuses, useTags } from '../../api/hooks'
+import { useLead, useLeadEvents, useLeadMessages, useLeadMutations, useManagers, useStatuses, useTags } from '../../api/hooks'
 import type { LeadCard, LeadEvent, LeadSource, Message, Status, Tag } from '../../api/types'
 import { Icon } from '../../components/Icon'
 import { TagLabel } from '../../components/TagLabel'
@@ -110,7 +110,6 @@ function StatusSteps({ lead, statuses }: { lead: LeadCard; statuses: Status[] })
 function TagsSection({ lead, tags }: { lead: LeadCard; tags: Tag[] }) {
   const { addTag, removeTag } = useLeadMutations(lead.id)
   const toast = useToast()
-  const isAdmin = useMe().data?.role === 'ADMIN'
   const onIds = new Set(lead.tags.map((t) => t.id))
   const off = tags.filter((t) => !onIds.has(t.id))
   return (
@@ -133,19 +132,14 @@ function TagsSection({ lead, tags }: { lead: LeadCard; tags: Tag[] }) {
         ))}
         {lead.tags.length === 0 && <span className="muted" style={{ fontSize: 13 }}>Тегов нет</span>}
       </div>
-      {(off.length > 0 || isAdmin) && (
+      {off.length > 0 && (
         <div className="tag-add-row">
-          {off.length > 0 && <span className="field">Добавить:</span>}
+          <span className="field">Добавить:</span>
           {off.map((t) => (
             <button key={t.id} type="button" className="tag-add" onClick={() => addTag.mutate(t.id, { onError: toast.error })}>
               + <TagLabel name={t.name} color={t.color} />
             </button>
           ))}
-          {isAdmin && (
-            <Link to="/settings/tags" className="card-link" style={{ marginLeft: 'auto' }}>
-              Управлять тегами
-            </Link>
-          )}
         </div>
       )}
     </section>
@@ -168,10 +162,7 @@ function DataSection({ lead }: { lead: LeadCard }) {
           {lead.username ? `@${lead.username} · ` : ''}ID {formatTelegramId(lead.telegramUserId)}
         </span>
       </div>
-      <div className="data-row">
-        <span>Телефон</span>
-        <span>{lead.phone ? formatPhone(lead.phone) : <span className="muted">не указан</span>}</span>
-      </div>
+      <PhoneRow lead={lead} />
       <div className="data-row">
         <label htmlFor="lead-source">Источник</label>
         <select
@@ -216,6 +207,80 @@ function DataSection({ lead }: { lead: LeadCard }) {
   )
 }
 
+function PhoneRow({ lead }: { lead: LeadCard }) {
+  const { setPhone } = useLeadMutations(lead.id)
+  const toast = useToast()
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState('')
+  const error = setPhone.error instanceof ApiError ? setPhone.error : null
+
+  const start = () => {
+    setValue(lead.phone ?? '')
+    setPhone.reset()
+    setEditing(true)
+  }
+
+  const save = (e: FormEvent) => {
+    e.preventDefault()
+    setPhone.mutate(value.trim() || null, {
+      onSuccess: () => setEditing(false),
+      onError: (err) => !(err instanceof ApiError && err.fields.phone) && toast.error(err),
+    })
+  }
+
+  if (editing) {
+    return (
+      <form className="data-row" onSubmit={save} style={{ alignItems: 'start' }}>
+        <label htmlFor="lead-phone" style={{ color: 'var(--muted)', paddingTop: 8 }}>
+          Телефон
+        </label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <input
+              id="lead-phone"
+              className={`input${error?.fields.phone ? ' invalid' : ''}`}
+              style={{ minHeight: 36, flex: '1 1 160px', width: 'auto' }}
+              type="tel"
+              inputMode="tel"
+              autoFocus
+              placeholder="+7 900 000-00-00"
+              maxLength={32}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Escape' && setEditing(false)}
+            />
+            <button type="submit" className="btn btn-sm btn-primary" style={{ minHeight: 36 }} disabled={setPhone.isPending}>
+              Сохранить
+            </button>
+            <button type="button" className="btn btn-sm" style={{ minHeight: 36 }} onClick={() => setEditing(false)}>
+              Отмена
+            </button>
+          </div>
+          {error?.fields.phone ? (
+            <span className="field-error">{error.fields.phone}</span>
+          ) : (
+            <span className="muted" style={{ fontSize: 12, fontWeight: 500 }}>
+              Пустое поле — удалить телефон
+            </span>
+          )}
+        </div>
+      </form>
+    )
+  }
+
+  return (
+    <div className="data-row">
+      <span>Телефон</span>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        {lead.phone ? <a href={`tel:${lead.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>{formatPhone(lead.phone)}</a> : <span className="muted">не указан</span>}
+        <button type="button" className="btn btn-link" style={{ minHeight: 28, padding: 0, fontSize: 13 }} onClick={start}>
+          {lead.phone ? 'Изменить' : 'Добавить'}
+        </button>
+      </span>
+    </div>
+  )
+}
+
 function eventText(e: LeadEvent) {
   const none = (v: string | undefined, empty: string) => v ?? empty
   switch (e.type) {
@@ -231,6 +296,8 @@ function eventText(e: LeadEvent) {
       return `добавлен тег #${e.newValue}`
     case 'TAG_REMOVED':
       return `снят тег #${e.oldValue}`
+    case 'PHONE_CHANGED':
+      return `телефон ${e.oldValue ? formatPhone(e.oldValue) : 'не указан'} → ${e.newValue ? formatPhone(e.newValue) : 'не указан'}`
   }
 }
 

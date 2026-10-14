@@ -5,6 +5,7 @@ import type { Role, User } from '../../api/types'
 import { Dialog } from '../../components/Dialog'
 import { useToast } from '../../components/Toast'
 import { formatDateLong } from '../../lib/format'
+import { MOBILE, useMediaQuery } from '../../lib/useMediaQuery'
 import './settings.css'
 
 const ROLES: { key: Role; label: string }[] = [
@@ -18,6 +19,7 @@ const EMPTY = { displayName: '', login: '', password: '', role: 'MANAGER' as Rol
 
 export function UsersPage() {
   const users = useUsers().data ?? []
+  const isMobile = useMediaQuery(MOBILE)
   const { create } = useUserMutations()
   const toast = useToast()
   const [form, setForm] = useState(EMPTY)
@@ -90,45 +92,53 @@ export function UsersPage() {
         </div>
       </form>
 
-      <section className="card flush" aria-label="Список пользователей">
-        <div className="table-wrap">
-          <table className="table" style={{ minWidth: 760 }}>
-            <thead>
-              <tr>
-                <th scope="col">Имя</th>
-                <th scope="col">Логин</th>
-                <th scope="col">Роль</th>
-                <th scope="col">Создан</th>
-                <th scope="col" style={{ textAlign: 'right' }}>
-                  Действия
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <UserRow key={u.id} user={u} />
-              ))}
-            </tbody>
-          </table>
+      {isMobile ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Список пользователей">
+          {users.map((u) => (
+            <UserRow key={u.id} user={u} layout="card" />
+          ))}
         </div>
-      </section>
+      ) : (
+        <section className="card flush" aria-label="Список пользователей">
+          <div className="table-wrap">
+            <table className="table middle" style={{ minWidth: 860 }}>
+              <thead>
+                <tr>
+                  <th scope="col">Имя</th>
+                  <th scope="col">Логин</th>
+                  <th scope="col">Роль</th>
+                  <th scope="col">Создан</th>
+                  <th scope="col" style={{ textAlign: 'right' }}>
+                    Действия
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <UserRow key={u.id} user={u} layout="row" />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   )
 }
 
-function UserRow({ user: u }: { user: User }) {
+function UserRow({ user: u, layout }: { user: User; layout: 'row' | 'card' }) {
   const me = useMe().data
   const m = useUserMutations()
   const toast = useToast()
   const [editing, setEditing] = useState(false)
-  const [name, setName] = useState(u.displayName)
+  const [name_, setName] = useState(u.displayName)
   const [role, setRole] = useState<Role>(u.role)
   const self = me?.id === u.id
   const [passwordOpen, setPasswordOpen] = useState(false)
 
   const save = () =>
     m.update.mutate(
-      { id: u.id, displayName: name.trim(), role },
+      { id: u.id, displayName: name_.trim(), role },
       { onSuccess: () => (setEditing(false), toast.show('Сохранено')), onError: toast.error },
     )
 
@@ -141,78 +151,92 @@ function UserRow({ user: u }: { user: User }) {
     }
   }
 
+  const name = editing ? (
+    <input className="input" style={{ minHeight: 36 }} aria-label="Имя" value={name_} maxLength={100} onChange={(e) => setName(e.target.value)} />
+  ) : (
+    <span style={{ fontWeight: 700 }}>
+      {u.displayName}
+      {self && <span className="muted" style={{ fontWeight: 500 }}> · это вы</span>}
+      {!u.active && (
+        <span className="role-badge" style={{ marginLeft: 8, background: '#FDECEC', color: 'var(--danger)' }}>
+          заблокирован
+        </span>
+      )}
+    </span>
+  )
+
+  const roleView = editing ? (
+    <select className="select" style={{ minHeight: 36 }} aria-label="Роль" value={role} disabled={self} onChange={(e) => setRole(e.target.value as Role)}>
+      {ROLES.map((r) => (
+        <option key={r.key} value={r.key}>
+          {r.label}
+        </option>
+      ))}
+    </select>
+  ) : (
+    <span
+      className="role-badge"
+      style={u.role === 'ADMIN' ? { background: '#EDE6FA', color: '#5B3BA6' } : { background: '#E4EFFB', color: '#1A5FA8' }}
+    >
+      {roleLabel(u.role)}
+    </span>
+  )
+
+  const actions = (
+    <div className="user-actions">
+      {editing ? (
+        <>
+          <button type="button" className="btn btn-sm btn-primary" disabled={m.update.isPending || !name_.trim()} onClick={save}>
+            Сохранить
+          </button>
+          <button type="button" className="btn btn-sm" onClick={() => (setEditing(false), setName(u.displayName), setRole(u.role))}>
+            Отмена
+          </button>
+        </>
+      ) : (
+        <>
+          <button type="button" className="btn btn-sm" onClick={() => setEditing(true)}>
+            Изменить
+          </button>
+          <button type="button" className="btn btn-sm" onClick={() => setPasswordOpen(true)}>
+            Сменить пароль
+          </button>
+          {!self && (
+            <button type="button" className={`btn btn-sm${u.active ? ' btn-danger' : ''}`} onClick={toggleBlock}>
+              {u.active ? 'Заблокировать' : 'Разблокировать'}
+            </button>
+          )}
+        </>
+      )}
+      {passwordOpen && <PasswordDialog user={u} self={self} onClose={() => setPasswordOpen(false)} />}
+    </div>
+  )
+
+  if (layout === 'card') {
+    return (
+      <article className="card" style={{ gap: 12, padding: 16, color: u.active ? undefined : 'var(--muted)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          {name}
+          {!editing && roleView}
+        </div>
+        {editing && roleView}
+        <div className="muted" style={{ fontSize: 13 }}>
+          {u.login} · создан {formatDateLong(u.createdAt)}
+        </div>
+        {actions}
+      </article>
+    )
+  }
+
   return (
     <tr style={u.active ? undefined : { color: 'var(--muted)' }}>
-      <td style={{ fontWeight: 700 }}>
-        {editing ? (
-          <input className="input" style={{ minHeight: 36 }} aria-label="Имя" value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
-        ) : (
-          <>
-            {u.displayName}
-            {self && <span className="muted" style={{ fontWeight: 500 }}> · это вы</span>}
-            {!u.active && (
-              <span className="role-badge" style={{ marginLeft: 8, background: '#FDECEC', color: 'var(--danger)' }}>
-                заблокирован
-              </span>
-            )}
-          </>
-        )}
-      </td>
+      <td>{name}</td>
       <td>{u.login}</td>
-      <td>
-        {editing ? (
-          <select className="select" style={{ minHeight: 36 }} aria-label="Роль" value={role} disabled={self} onChange={(e) => setRole(e.target.value as Role)}>
-            {ROLES.map((r) => (
-              <option key={r.key} value={r.key}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <span
-            className="role-badge"
-            style={u.role === 'ADMIN' ? { background: '#EDE6FA', color: '#5B3BA6' } : { background: '#E4EFFB', color: '#1A5FA8' }}
-          >
-            {roleLabel(u.role)}
-          </span>
-        )}
-      </td>
+      <td>{roleView}</td>
       <td className="muted" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
         {formatDateLong(u.createdAt)}
       </td>
-      <td>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, flexWrap: 'wrap' }}>
-          {editing ? (
-            <>
-              <button type="button" className="btn btn-sm btn-primary" disabled={m.update.isPending || !name.trim()} onClick={save}>
-                Сохранить
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={() => (setEditing(false), setName(u.displayName), setRole(u.role))}
-              >
-                Отмена
-              </button>
-            </>
-          ) : (
-            <>
-              <button type="button" className="btn btn-sm" onClick={() => setEditing(true)}>
-                Изменить
-              </button>
-              <button type="button" className="btn btn-sm" onClick={() => setPasswordOpen(true)}>
-                Сменить пароль
-              </button>
-              {!self && (
-                <button type="button" className={`btn btn-sm${u.active ? ' btn-danger' : ''}`} onClick={toggleBlock}>
-                  {u.active ? 'Заблокировать' : 'Разблокировать'}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-        {passwordOpen && <PasswordDialog user={u} self={self} onClose={() => setPasswordOpen(false)} />}
-      </td>
+      <td>{actions}</td>
     </tr>
   )
 }
