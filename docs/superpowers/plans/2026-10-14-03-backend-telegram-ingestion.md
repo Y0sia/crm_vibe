@@ -1081,12 +1081,13 @@ import org.springframework.web.client.RestClient;
 class TelegramConfig {
 
 	@Bean
-	TelegramBotClient telegramBotClient(RestClient.Builder builder, TelegramProperties props) {
+	TelegramBotClient telegramBotClient(TelegramProperties props) {
 		HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 		JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(http);
 		// long polling держит запрос до 25 с — таймаут чтения с запасом
 		factory.setReadTimeout(Duration.ofSeconds(40));
-		return new HttpTelegramBotClient(builder.clone().requestFactory(factory), props.apiUrl(),
+		// RestClient.Builder-бина в Boot 4 без spring-boot-restclient нет — собираем свой
+		return new HttpTelegramBotClient(RestClient.builder().requestFactory(factory), props.apiUrl(),
 				props.botToken() == null ? "" : props.botToken());
 	}
 

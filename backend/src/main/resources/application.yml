@@ -33,3 +33,7 @@ crm:
   admin:
     login: ${CRM_ADMIN_LOGIN:}
     password: ${CRM_ADMIN_PASSWORD:}
+  telegram:
+    bot-token: ${TELEGRAM_BOT_TOKEN:}
+    polling-enabled: true
+    api-url: https://api.telegram.org
