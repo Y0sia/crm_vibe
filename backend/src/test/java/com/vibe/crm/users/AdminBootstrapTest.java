@@ -9,9 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.vibe.crm.IntegrationTest;
+import com.vibe.crm.TestData;
 
 @IntegrationTest
 class AdminBootstrapTest {
+
+	@Autowired
+	TestData data;
 
 	@Autowired
 	UserRepository users;
@@ -21,7 +25,7 @@ class AdminBootstrapTest {
 
 	@BeforeEach
 	void clean() {
-		users.deleteAll();
+		data.clearUsers();
 	}
 
 	@Test

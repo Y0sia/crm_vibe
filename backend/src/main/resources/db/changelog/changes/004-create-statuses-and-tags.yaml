@@ -1,0 +1,78 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-create-statuses-and-tags
+      author: crm
+      changes:
+        - createTable:
+            tableName: statuses
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_statuses
+              - column:
+                  name: name
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_statuses_name
+              - column:
+                  name: color
+                  type: varchar(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: won
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: tags
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_tags
+              - column:
+                  name: name
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_tags_name
+              - column:
+                  name: color
+                  type: varchar(16)
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 004-create-statuses-and-tags-seed
+      author: crm
+      changes:
+        - insert: { tableName: statuses, columns: [ { column: { name: name, value: Новый } }, { column: { name: color, value: BLUE } }, { column: { name: position, valueNumeric: 0 } } ] }
+        - insert: { tableName: statuses, columns: [ { column: { name: name, value: В работе } }, { column: { name: color, value: ORANGE } }, { column: { name: position, valueNumeric: 1 } } ] }
+        - insert: { tableName: statuses, columns: [ { column: { name: name, value: Ждёт ответа } }, { column: { name: color, value: PURPLE } }, { column: { name: position, valueNumeric: 2 } } ] }
+        - insert: { tableName: statuses, columns: [ { column: { name: name, value: Квалифицирован } }, { column: { name: color, value: TEAL } }, { column: { name: position, valueNumeric: 3 } } ] }
+        - insert: { tableName: statuses, columns: [ { column: { name: name, value: Сделка } }, { column: { name: color, value: GREEN } }, { column: { name: position, valueNumeric: 4 } }, { column: { name: won, valueBoolean: true } } ] }
+        - insert: { tableName: statuses, columns: [ { column: { name: name, value: Отказ } }, { column: { name: color, value: GRAY } }, { column: { name: position, valueNumeric: 5 } } ] }
+        - insert: { tableName: tags, columns: [ { column: { name: name, value: VIP } }, { column: { name: color, value: BRICK } } ] }
+        - insert: { tableName: tags, columns: [ { column: { name: name, value: Опт } }, { column: { name: color, value: BLUE } } ] }
+        - insert: { tableName: tags, columns: [ { column: { name: name, value: Розница } }, { column: { name: color, value: PURPLE } } ] }
+        - insert: { tableName: tags, columns: [ { column: { name: name, value: Повторный } }, { column: { name: color, value: GREEN } } ] }
+        - insert: { tableName: tags, columns: [ { column: { name: name, value: Срочно } }, { column: { name: color, value: RED } } ] }
+      rollback:
+        - delete: { tableName: tags }
+        - delete: { tableName: statuses }

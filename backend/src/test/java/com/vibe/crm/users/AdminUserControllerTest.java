@@ -16,12 +16,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.vibe.crm.IntegrationTest;
+import com.vibe.crm.TestData;
 import com.vibe.crm.TestLogin;
 
 import jakarta.servlet.http.Cookie;
 
 @IntegrationTest
 class AdminUserControllerTest {
+
+	@Autowired
+	TestData data;
 
 	@Autowired
 	MockMvc mvc;
@@ -38,7 +42,7 @@ class AdminUserControllerTest {
 
 	@BeforeEach
 	void setUp() throws Exception {
-		users.deleteAll();
+		data.clearUsers();
 		adminId = users.save(new User("boss", encoder.encode("boss-pass-1"), "Босс", Role.ADMIN)).getId();
 		admin = TestLogin.as(mvc, "boss", "boss-pass-1");
 	}

@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-leads
+      author: crm
+      changes:
+        - createTable:
+            tableName: leads
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_leads } }
+              - column: { name: telegram_user_id, type: bigint, constraints: { nullable: false, unique: true, uniqueConstraintName: uq_leads_telegram_user_id } }
+              - column: { name: telegram_chat_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: business_connection_id, type: varchar(128) }
+              - column: { name: first_name, type: varchar(255) }
+              - column: { name: last_name, type: varchar(255) }
+              - column: { name: username, type: varchar(64) }
+              - column: { name: phone, type: varchar(32) }
+              - column: { name: status_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_leads_status, references: statuses(id) } }
+              - column: { name: manager_id, type: bigint, constraints: { foreignKeyName: fk_leads_manager, references: users(id) } }
+              - column: { name: source, type: varchar(16) }
+              - column: { name: created_at, type: timestamp with time zone, constraints: { nullable: false } }
+              - column: { name: last_message_at, type: timestamp with time zone }
+              - column: { name: last_message_text, type: text }
+              - column: { name: last_incoming_at, type: timestamp with time zone }
+              - column: { name: awaiting_reply_since, type: timestamp with time zone }
+        - createIndex: { tableName: leads, indexName: idx_leads_telegram_chat_id, columns: [ { column: { name: telegram_chat_id } } ] }
+        - createIndex: { tableName: leads, indexName: idx_leads_status_id, columns: [ { column: { name: status_id } } ] }
+        - createIndex: { tableName: leads, indexName: idx_leads_manager_id, columns: [ { column: { name: manager_id } } ] }
+        - createIndex: { tableName: leads, indexName: idx_leads_last_message_at, columns: [ { column: { name: last_message_at } } ] }
+        - createIndex: { tableName: leads, indexName: idx_leads_created_at, columns: [ { column: { name: created_at } } ] }
+        - createTable:
+            tableName: lead_tags
+            columns:
+              - column: { name: lead_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_lead_tags_lead, references: leads(id), deleteCascade: true } }
+              - column: { name: tag_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_lead_tags_tag, references: tags(id), deleteCascade: true } }
+        - addPrimaryKey: { tableName: lead_tags, columnNames: 'lead_id, tag_id', constraintName: pk_lead_tags }
+        - createIndex: { tableName: lead_tags, indexName: idx_lead_tags_tag_id, columns: [ { column: { name: tag_id } } ] }
+        - createTable:
+            tableName: lead_events
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_lead_events } }
+              - column: { name: lead_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_lead_events_lead, references: leads(id), deleteCascade: true } }
+              - column: { name: actor_id, type: bigint, constraints: { foreignKeyName: fk_lead_events_actor, references: users(id) } }
+              - column: { name: type, type: varchar(32), constraints: { nullable: false } }
+              - column: { name: old_value, type: varchar(255) }
+              - column: { name: new_value, type: varchar(255) }
+              - column: { name: created_at, type: timestamp with time zone, constraints: { nullable: false } }
+        - createIndex: { tableName: lead_events, indexName: idx_lead_events_lead_id, columns: [ { column: { name: lead_id } } ] }

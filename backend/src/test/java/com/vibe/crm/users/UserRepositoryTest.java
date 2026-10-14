@@ -8,17 +8,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.vibe.crm.IntegrationTest;
+import com.vibe.crm.TestData;
 
 @IntegrationTest
 @Transactional
 class UserRepositoryTest {
 
 	@Autowired
+	TestData data;
+
+	@Autowired
 	UserRepository users;
 
 	@BeforeEach
 	void clean() {
-		users.deleteAll();
+		data.clearUsers();
 	}
 
 	@Test

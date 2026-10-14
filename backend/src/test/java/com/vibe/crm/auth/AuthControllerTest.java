@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.vibe.crm.IntegrationTest;
+import com.vibe.crm.TestData;
 import com.vibe.crm.TestLogin;
 import com.vibe.crm.users.Role;
 import com.vibe.crm.users.User;
@@ -24,6 +25,9 @@ import jakarta.servlet.http.Cookie;
 
 @IntegrationTest
 class AuthControllerTest {
+
+	@Autowired
+	TestData data;
 
 	@Autowired
 	MockMvc mvc;
@@ -36,7 +40,7 @@ class AuthControllerTest {
 
 	@BeforeEach
 	void setUp() {
-		users.deleteAll();
+		data.clearUsers();
 		users.save(new User("maria", encoder.encode("secret123"), "Мария К.", Role.MANAGER));
 		User blocked = new User("oleg", encoder.encode("secret123"), "Олег Д.", Role.MANAGER);
 		blocked.setActive(false);
