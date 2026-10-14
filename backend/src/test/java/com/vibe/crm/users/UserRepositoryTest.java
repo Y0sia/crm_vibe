@@ -2,6 +2,7 @@ package com.vibe.crm.users;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,11 @@ class UserRepositoryTest {
 
 	@Autowired
 	UserRepository users;
+
+	@BeforeEach
+	void clean() {
+		users.deleteAll();
+	}
 
 	@Test
 	void loginIsStoredLowercaseAndFoundByIt() {
