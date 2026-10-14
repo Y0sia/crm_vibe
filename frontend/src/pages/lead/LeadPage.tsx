@@ -6,7 +6,7 @@ import type { LeadCard, LeadEvent, LeadSource, Message, Status, Tag } from '../.
 import { Icon } from '../../components/Icon'
 import { TagLabel } from '../../components/TagLabel'
 import { useToast } from '../../components/Toast'
-import { formatDateLong, formatDayHeading, formatMessageDate, formatTelegramId, formatTime, initials } from '../../lib/format'
+import { formatDateLong, formatDayHeading, formatMessageDate, formatPhone, formatTelegramId, formatTime, initials } from '../../lib/format'
 import { SOURCES, STATUS_COLORS, TAG_COLORS, avatarColor } from '../../lib/palette'
 import './lead.css'
 
@@ -170,7 +170,7 @@ function DataSection({ lead }: { lead: LeadCard }) {
       </div>
       <div className="data-row">
         <span>Телефон</span>
-        <span>{lead.phone ?? <span className="muted">не указан</span>}</span>
+        <span>{lead.phone ? formatPhone(lead.phone) : <span className="muted">не указан</span>}</span>
       </div>
       <div className="data-row">
         <label htmlFor="lead-source">Источник</label>
@@ -247,7 +247,8 @@ function eventColor(e: LeadEvent, statuses: Status[], tags: Tag[]) {
 }
 
 function HistorySection({ leadId, statuses, tags }: { leadId: number; statuses: Status[]; tags: Tag[] }) {
-  const events = useLeadEvents(leadId).data ?? []
+  const query = useLeadEvents(leadId)
+  const events = query.data ?? []
   return (
     <section className="card" aria-label="История" style={{ padding: '18px 20px', gap: 14 }}>
       <h2 className="card-title" style={{ fontSize: 15 }}>
@@ -266,14 +267,16 @@ function HistorySection({ leadId, statuses, tags }: { leadId: number; statuses: 
             </div>
           </div>
         ))}
-        {events.length === 0 && <span className="muted">Изменений пока нет</span>}
+        {query.isPending && <span className="muted">Загрузка…</span>}
+        {query.isSuccess && events.length === 0 && <span className="muted">Изменений пока нет</span>}
       </div>
     </section>
   )
 }
 
 function Chat({ lead }: { lead: LeadCard }) {
-  const messages = useLeadMessages(lead.id).data ?? []
+  const query = useLeadMessages(lead.id)
+  const messages = query.data ?? []
   const { reply } = useLeadMutations(lead.id)
   const toast = useToast()
   const [text, setText] = useState('')
@@ -311,9 +314,9 @@ function Chat({ lead }: { lead: LeadCard }) {
         {messages.map((m, i) => (
           <MessageBubble key={m.id} message={m} previous={messages[i - 1]} />
         ))}
-        {messages.length === 0 && (
+        {(query.isPending || messages.length === 0) && (
           <div className="muted" style={{ margin: 'auto', fontSize: 14 }}>
-            Сообщений пока нет
+            {query.isPending ? 'Загрузка…' : 'Сообщений пока нет'}
           </div>
         )}
       </div>

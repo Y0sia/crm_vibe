@@ -42,7 +42,9 @@ export function useLogin() {
   return useMutation({
     mutationFn: (body: { login: string; password: string }) => api.post<Me>('/api/auth/login', body),
     onSuccess: (me) => {
-      qc.clear()
+      // данные прошлого пользователя не должны остаться в кэше; сам запрос «me» не удаляем —
+      // на него подписана защита маршрутов
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== keys.me[0] })
       qc.setQueryData(keys.me, me)
     },
   })
@@ -53,8 +55,8 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => api.post<void>('/api/auth/logout'),
     onSettled: () => {
-      qc.clear()
       qc.setQueryData(keys.me, null)
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== keys.me[0] })
     },
   })
 }

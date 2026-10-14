@@ -1,7 +1,7 @@
 # CRM
 
 - `backend/` — Spring Boot 4.1 (Java 25, Maven), JPA, Liquibase
-- `frontend/` — React 19 + TypeScript (Vite)
+- `frontend/` — React 19 + TypeScript (Vite), React Router, TanStack Query
 - `docker-compose.yml` — PostgreSQL 18
 
 ## Запуск
@@ -17,7 +17,9 @@ cd backend && ./mvnw spring-boot:run
 cd frontend && npm install && npm run dev
 ```
 
-Проверка: `curl localhost:8080/api/ping` возвращает версию PostgreSQL.
+Вход: http://localhost:3000 — логин и пароль первого администратора задаются в `.env` (`CRM_ADMIN_LOGIN`, `CRM_ADMIN_PASSWORD`).
+
+Тесты: `cd backend && ./mvnw verify` (нужен Docker), `cd frontend && npm test`.
 
 ## Настройки
 

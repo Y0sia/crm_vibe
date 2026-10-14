@@ -187,11 +187,11 @@ function LeadRow({ lead, statuses }: { lead: LeadListItem; statuses: Status[] })
           {lead.tags.length === 0 && <span style={{ fontSize: 12, color: 'var(--muted-2)' }}>—</span>}
         </div>
       </td>
-      <td style={{ fontWeight: 600, color: lead.manager ? 'var(--ink)' : 'var(--warn)' }}>
+      <td style={{ fontWeight: 600, whiteSpace: 'nowrap', color: lead.manager ? 'var(--ink)' : 'var(--warn)' }}>
         {lead.manager?.displayName ?? 'Не назначен'}
       </td>
       <td>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-2)' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
           <span style={{ color: 'var(--accent)', display: 'inline-flex' }}>
             <Icon name="plane" size={14} strokeWidth={2.2} />
           </span>

@@ -20,14 +20,16 @@ function NavLinks({ items, onNavigate, iconSize }: { items: NavItem[]; onNavigat
 }
 
 export function AppLayout() {
-  const me = useMe().data!
+  const me = useMe().data
   const newCount = useNewCount().data?.count ?? 0
   const logout = useLogout()
   const [menuOpen, setMenuOpen] = useState(false)
   const matches = useMatches()
   const title = [...matches].reverse().map((m) => (m.handle as { title?: string } | undefined)?.title).find(Boolean)
 
-  useLiveUpdates(true)
+  useLiveUpdates(!!me)
+  // при выходе пользователь становится null чуть раньше, чем срабатывает переход на вход
+  if (!me) return null
 
   const main: NavItem[] = [
     { to: '/dashboard', label: 'Дашборд', icon: 'chart' },

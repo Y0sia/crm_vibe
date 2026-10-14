@@ -4,6 +4,7 @@ import {
   formatDayHeading,
   formatDuration,
   formatMessageDate,
+  formatPhone,
   formatTelegramId,
   formatTime,
   initials,
@@ -61,6 +62,10 @@ describe('мелочи', () => {
     expect(initials('Мария К.')).toBe('МК')
     expect(initials('Администратор')).toBe('А')
     expect(initials('@anna_sm')).toBe('A')
+  })
+  it('телефон', () => {
+    expect(formatPhone('+79000000000')).toBe('+7 900 000-00-00')
+    expect(formatPhone('+380501234567')).toBe('+380501234567')
   })
   it('ID Telegram с пробелами', () => {
     expect(formatTelegramId(548213097)).toBe('548 213 097')

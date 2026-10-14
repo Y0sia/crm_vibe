@@ -140,11 +140,13 @@ function NewLeadsChart({ days }: { days: Dashboard['newLeadsByDay'] }) {
       <div className="bars" style={{ gap }}>
         {days.map((d, i) => (
           <div key={d.date} className="bar-col" title={`${formatShortDay(d.date)}: ${d.count}`}>
-            {showValues && <span className="num">{d.count}</span>}
-            <div
-              className="bar"
-              style={{ height: `${(d.count / max) * 80}%`, background: i === days.length - 1 ? '#164C86' : '#2B85DA' }}
-            />
+            {showValues && d.count > 0 && <span className="num">{d.count}</span>}
+            {d.count > 0 && (
+              <div
+                className="bar"
+                style={{ height: `${(d.count / max) * 80}%`, background: i === days.length - 1 ? '#164C86' : '#2B85DA' }}
+              />
+            )}
           </div>
         ))}
       </div>
@@ -187,7 +189,7 @@ function HBars({
 }
 
 function Sources({ data }: { data: Dashboard }) {
-  const rows = data.bySource
+  const rows = data.bySource.filter((r) => r.count > 0)
   const total = rows.reduce((s, r) => s + r.count, 0)
   return (
     <section className="card" aria-label="Источники">
@@ -199,6 +201,7 @@ function Sources({ data }: { data: Dashboard }) {
             <div key={r.source ?? 'none'} style={{ width: `${(r.count / Math.max(total, 1)) * 100}%`, background: sourceColor(r.source) }} />
           ))}
       </div>
+      {rows.length === 0 && <span className="muted">За этот период новых лидов нет</span>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {rows.map((r) => (
           <div key={r.source ?? 'none'} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>

@@ -162,7 +162,7 @@ function StatusRow({
           onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
         />
         <span className="pill" style={{ background: c.bg, color: c.fg }}>
-          {s.won ? 'сделка' : s.name}
+          {s.name}
         </span>
       </div>
       <span className="status-count num" style={{ textAlign: 'right', fontWeight: 700 }}>

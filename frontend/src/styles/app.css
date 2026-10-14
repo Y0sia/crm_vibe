@@ -216,9 +216,13 @@ button:disabled {
 .nav-user-name span {
   font-size: 12px;
   color: #a4aab5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .btn-logout {
+  flex: none;
   min-height: 40px;
   padding: 0 10px;
   border-radius: 8px;
