@@ -50,7 +50,8 @@ public class UpdatePoller implements SmartLifecycle {
 				processor.process(update);
 			}
 			catch (RuntimeException e) {
-				log.error("Не удалось обработать апдейт {}", update.updateId(), e);
+				log.error("Не удалось обработать апдейт {}: {}", update.updateId(),
+						TelegramLog.mask(e.toString(), props.botToken()));
 			}
 			saveOffset(update.updateId() + 1);
 		}
@@ -84,11 +85,13 @@ public class UpdatePoller implements SmartLifecycle {
 					running = false;
 					return;
 				}
-				log.warn("Ошибка Telegram: {}. Повтор через {} с", e.getMessage(), backoff.toSeconds());
+				log.warn("Ошибка Telegram: {}. Повтор через {} с", TelegramLog.mask(e.getMessage(), props.botToken()),
+						backoff.toSeconds());
 				backoff = sleep(backoff);
 			}
 			catch (RuntimeException e) {
-				log.warn("Ошибка приёма апдейтов: {}. Повтор через {} с", e.toString(), backoff.toSeconds());
+				log.warn("Ошибка приёма апдейтов: {}. Повтор через {} с", TelegramLog.mask(e.toString(), props.botToken()),
+						backoff.toSeconds());
 				backoff = sleep(backoff);
 			}
 		}

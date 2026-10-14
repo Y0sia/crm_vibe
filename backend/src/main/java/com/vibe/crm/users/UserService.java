@@ -65,10 +65,13 @@ public class UserService {
 		return UserDto.of(user);
 	}
 
-	public void changePassword(Long id, String password) {
+	/** keepSessionId — сессия, из которой меняют пароль: себе самому сменить пароль и не вылететь. */
+	public void changePassword(Long id, String password, String keepSessionId) {
 		User user = get(id);
 		user.setPasswordHash(encoder.encode(password));
-		endSessions(user);
+		sessions.findByPrincipalName(user.getLogin()).keySet().stream()
+			.filter(sessionId -> !sessionId.equals(keepSessionId))
+			.forEach(sessions::deleteById);
 	}
 
 	public UserDto setActive(Long id, boolean active) {

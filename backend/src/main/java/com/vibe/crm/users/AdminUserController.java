@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -65,8 +67,10 @@ public class AdminUserController {
 
 	@PutMapping("/{id}/password")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void changePassword(@PathVariable Long id, @Valid @RequestBody PasswordRequest body) {
-		service.changePassword(id, body.password());
+	public void changePassword(@PathVariable Long id, @Valid @RequestBody PasswordRequest body,
+			HttpServletRequest request) {
+		HttpSession session = request.getSession(false);
+		service.changePassword(id, body.password(), session == null ? null : session.getId());
 	}
 
 	@PostMapping("/{id}/block")

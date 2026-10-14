@@ -173,4 +173,17 @@ class AdminUserControllerTest {
 		mvc.perform(get("/api/auth/me").cookie(again)).andExpect(status().isUnauthorized());
 	}
 
+	@Test
+	void changingOwnPasswordKeepsCurrentSession() throws Exception {
+		mvc.perform(put("/api/admin/users/{id}/password", adminId).cookie(admin).with(csrf())
+				.contentType(MediaType.APPLICATION_JSON).content(json("{'password':'boss-new-pass'}")))
+			.andExpect(status().isNoContent());
+
+		mvc.perform(get("/api/auth/me").cookie(admin)).andExpect(status().isOk());
+		TestLogin.as(mvc, "boss", "boss-new-pass");
+		mvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+				.content(json("{'login':'boss','password':'boss-pass-1'}")))
+			.andExpect(status().isUnauthorized());
+	}
+
 }
