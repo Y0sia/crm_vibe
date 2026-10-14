@@ -1,0 +1,117 @@
+.period {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.period-custom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.period-custom label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.period-custom input {
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--input);
+  font-size: 14px;
+  background: #fff;
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  height: 220px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--input);
+}
+
+.bar-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  height: 100%;
+}
+
+.bar-col span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.bar {
+  width: 100%;
+  max-width: 30px;
+  border-radius: 6px 6px 2px 2px;
+  min-height: 2px;
+}
+
+.bar-labels {
+  display: flex;
+  margin-top: -8px;
+}
+
+.bar-labels span {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.hbar {
+  display: grid;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.hbar-track {
+  background: var(--track);
+  overflow: hidden;
+}
+
+.hbar-track div {
+  height: 100%;
+}
+
+.source-strip {
+  display: flex;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+  gap: 2px;
+  background: var(--track);
+}
+
+@media (max-width: 768px) {
+  .period {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .period .seg button {
+    flex: 1;
+  }
+
+  .bars {
+    height: 160px;
+  }
+}

@@ -1,0 +1,159 @@
+.create-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  padding: 18px 20px;
+}
+
+.create-form > .field:first-child {
+  flex: 2 1 240px;
+}
+
+.create-form > .field {
+  flex: 1 1 200px;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 110px 168px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.status-grid.head {
+  padding: 12px 20px;
+  background: var(--subtle);
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.status-name-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.status-name-input:hover,
+.status-name-input:focus {
+  border-color: var(--input);
+  background: #fff;
+}
+
+.pill {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.note {
+  padding: 14px 20px;
+  font-size: 13px;
+  color: var(--muted);
+  background: #fbfbfc;
+}
+
+.tag-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.tag-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tag-card.editing {
+  border-color: var(--primary);
+}
+
+.tag-badge {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 10px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 17px;
+}
+
+.tag-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-2);
+}
+
+.tag-card-actions .btn {
+  flex: 1;
+}
+
+.role-badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .status-grid {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 12px 16px;
+  }
+
+  .status-grid.head {
+    display: none;
+  }
+
+  .status-grid .status-n,
+  .status-grid .pill {
+    display: none;
+  }
+
+  .status-grid .status-count {
+    grid-column: 1;
+    grid-row: 2;
+    text-align: left !important;
+    font-size: 13px;
+    color: var(--muted);
+    padding-left: 32px;
+  }
+
+  .status-grid .status-actions {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .create-form {
+    padding: 16px;
+  }
+
+  .create-form .btn-primary {
+    width: 100%;
+  }
+}

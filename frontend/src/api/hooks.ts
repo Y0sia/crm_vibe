@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
 import type { LeadFilters } from '../lib/leadFilter'
 import { toApiParams } from '../lib/leadFilter'
 import { api } from './client'
@@ -195,3 +195,17 @@ export const useDashboard = (from: string, to: string) =>
     queryFn: () => api.get<Dashboard>(`/api/dashboard?from=${from}&to=${to}`),
     placeholderData: (previous) => previous,
   })
+
+/** Мобильный список: страницы подгружаются кнопкой «Показать ещё». */
+export function useLeadsInfinite(filters: LeadFilters, enabled: boolean) {
+  const base = toApiParams(filters, 0, 25)
+  base.delete('page')
+  const params = base.toString()
+  return useInfiniteQuery({
+    queryKey: [...keys.leads, 'infinite', params],
+    queryFn: ({ pageParam }) => api.get<LeadPage>(`/api/leads?${params}&page=${pageParam}`),
+    initialPageParam: 0,
+    getNextPageParam: (last) => ((last.page + 1) * last.size < last.found ? last.page + 1 : undefined),
+    enabled,
+  })
+}
