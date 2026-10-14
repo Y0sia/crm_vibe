@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-messages-and-telegram
+      author: crm
+      changes:
+        - createTable:
+            tableName: messages
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_messages } }
+              - column: { name: lead_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_messages_lead, references: leads(id), deleteCascade: true } }
+              - column: { name: telegram_message_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: direction, type: varchar(8), constraints: { nullable: false } }
+              - column: { name: text, type: text, constraints: { nullable: false } }
+              - column: { name: sent_at, type: timestamp with time zone, constraints: { nullable: false } }
+              - column: { name: author_id, type: bigint, constraints: { foreignKeyName: fk_messages_author, references: users(id) } }
+              - column: { name: edited_at, type: timestamp with time zone }
+              - column: { name: deleted, type: boolean, defaultValueBoolean: false, constraints: { nullable: false } }
+        - addUniqueConstraint: { tableName: messages, columnNames: 'lead_id, telegram_message_id', constraintName: uq_messages_lead_telegram_message }
+        - createIndex: { tableName: messages, indexName: idx_messages_lead_sent_at, columns: [ { column: { name: lead_id } }, { column: { name: sent_at } } ] }
+        - createTable:
+            tableName: response_events
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_response_events } }
+              - column: { name: lead_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_response_events_lead, references: leads(id), deleteCascade: true } }
+              - column: { name: author_id, type: bigint, constraints: { foreignKeyName: fk_response_events_author, references: users(id) } }
+              - column: { name: waited_seconds, type: bigint, constraints: { nullable: false } }
+              - column: { name: answered_at, type: timestamp with time zone, constraints: { nullable: false } }
+        - createIndex: { tableName: response_events, indexName: idx_response_events_answered_at, columns: [ { column: { name: answered_at } } ] }
+        - createTable:
+            tableName: business_connections
+            columns:
+              - column: { name: id, type: varchar(128), constraints: { primaryKey: true, primaryKeyName: pk_business_connections } }
+              - column: { name: owner_telegram_user_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: user_chat_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: can_reply, type: boolean, constraints: { nullable: false } }
+              - column: { name: enabled, type: boolean, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp with time zone, constraints: { nullable: false } }
+        - createTable:
+            tableName: telegram_state
+            columns:
+              - column: { name: key, type: varchar(64), constraints: { primaryKey: true, primaryKeyName: pk_telegram_state } }
+              - column: { name: value, type: varchar(255), constraints: { nullable: false } }

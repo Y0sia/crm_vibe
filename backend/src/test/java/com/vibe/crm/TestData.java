@@ -65,9 +65,18 @@ public class TestData {
 
 	@Transactional
 	public void clearLeads() {
+		em.createNativeQuery("delete from response_events").executeUpdate();
+		em.createNativeQuery("delete from messages").executeUpdate();
 		events.deleteAllInBatch();
 		em.createNativeQuery("delete from lead_tags").executeUpdate();
 		leads.deleteAllInBatch();
+	}
+
+	@Transactional
+	public void clearTelegram() {
+		clearLeads();
+		em.createNativeQuery("delete from business_connections").executeUpdate();
+		em.createNativeQuery("delete from telegram_state").executeUpdate();
 	}
 
 	/** Пользователей нельзя удалить, пока на них ссылаются лиды и история. */
