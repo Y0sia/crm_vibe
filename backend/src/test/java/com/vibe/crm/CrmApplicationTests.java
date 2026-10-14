@@ -1,9 +1,8 @@
 package com.vibe.crm;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@IntegrationTest
 class CrmApplicationTests {
 
 	@Test

@@ -15,7 +15,7 @@ Spring Boot 4 отличается от 3.x: стартеры модульные
 ## Команды
 
 ```bash
-docker compose up -d                       # БД (из корня); нужна для запуска бекенда и тестов
+docker compose up -d                       # БД (из корня); нужна для запуска бекенда
 
 cd backend
 ./mvnw spring-boot:run                     # бекенд на :8080
@@ -29,7 +29,7 @@ npm run build                              # tsc -b + vite build
 npm run lint                               # oxlint
 ```
 
-Тесты `@SpringBootTest` подключаются к реальной БД из docker compose (Testcontainers нет), поэтому без `docker compose up -d` они падают.
+Интеграционные тесты помечаются `@IntegrationTest` (`backend/src/test/java/com/vibe/crm/IntegrationTest.java`): полный контекст + MockMvc + одноразовый PostgreSQL через Testcontainers. Нужен запущенный Docker; рабочая БД из docker compose тестами не используется.
 
 ## Как всё связано
 
