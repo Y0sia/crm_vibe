@@ -106,6 +106,14 @@ public class Lead {
 		return "ID " + telegramUserId;
 	}
 
+	/** Последнее сообщение для списка лидов: обновляется, если это сообщение не старше текущего. */
+	public void registerMessage(String text, Instant at) {
+		if (lastMessageAt == null || !at.isBefore(lastMessageAt)) {
+			lastMessageAt = at;
+			lastMessageText = text;
+		}
+	}
+
 	public Long getId() {
 		return id;
 	}

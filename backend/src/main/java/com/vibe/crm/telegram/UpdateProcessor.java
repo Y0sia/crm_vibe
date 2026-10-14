@@ -144,7 +144,7 @@ public class UpdateProcessor {
 		}
 		String text = MessageTexts.describe(m);
 		messages.save(new Message(lead, m.messageId(), Direction.IN, text, at, null));
-		touch(lead, text, at);
+		lead.registerMessage(text, at);
 		lead.setLastIncomingAt(at);
 		responses.onIncoming(lead, at);
 		events.publishEvent(new LeadActivity(lead.getId(), created ? LeadActivity.Kind.LEAD_CREATED : LeadActivity.Kind.MESSAGE_CREATED));
@@ -162,7 +162,7 @@ public class UpdateProcessor {
 		Instant at = m.sentAt();
 		String text = MessageTexts.describe(m);
 		messages.save(new Message(lead, m.messageId(), Direction.OUT, text, at, null));
-		touch(lead, text, at);
+		lead.registerMessage(text, at);
 		responses.onOutgoing(lead, at, null);
 		events.publishEvent(new LeadActivity(lead.getId(), LeadActivity.Kind.MESSAGE_CREATED));
 	}
@@ -192,13 +192,6 @@ public class UpdateProcessor {
 			messages.findByLeadAndTelegramMessageIdIn(lead, d.messageIds()).forEach(Message::markDeleted);
 			events.publishEvent(new LeadActivity(lead.getId(), LeadActivity.Kind.MESSAGE_CREATED));
 		});
-	}
-
-	private static void touch(Lead lead, String text, Instant at) {
-		if (lead.getLastMessageAt() == null || !at.isBefore(lead.getLastMessageAt())) {
-			lead.setLastMessageAt(at);
-			lead.setLastMessageText(text);
-		}
 	}
 
 	static String normalizePhone(String phone) {

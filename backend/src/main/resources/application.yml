@@ -13,6 +13,9 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 50
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
   session:
@@ -30,6 +33,7 @@ management:
         include: health,info
 
 crm:
+  timezone: Europe/Moscow
   admin:
     login: ${CRM_ADMIN_LOGIN:}
     password: ${CRM_ADMIN_PASSWORD:}
