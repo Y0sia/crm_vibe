@@ -4,7 +4,11 @@
 - `frontend/` — React 19 + TypeScript (Vite), React Router, TanStack Query
 - `docker-compose.yml` — PostgreSQL 18
 
-## Запуск
+## Развёртывание на сервере
+
+См. [DEPLOY.md](DEPLOY.md): `docker compose -f docker-compose.prod.yml up -d --build`.
+
+## Запуск для разработки
 
 ```bash
 # 1. База данных

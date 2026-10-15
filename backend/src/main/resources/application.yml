@@ -25,6 +25,8 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  # за nginx: учитывать X-Forwarded-Proto, чтобы при HTTPS cookie получали флаг Secure
+  forward-headers-strategy: native
 
 management:
   endpoints:
@@ -33,7 +35,7 @@ management:
         include: health,info
 
 crm:
-  timezone: Europe/Moscow
+  timezone: ${CRM_TIMEZONE:Europe/Moscow}
   admin:
     login: ${CRM_ADMIN_LOGIN:}
     password: ${CRM_ADMIN_PASSWORD:}

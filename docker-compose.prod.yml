@@ -1,0 +1,48 @@
+# Продакшен: база, бекенд и сайт. Запуск на сервере:
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Настройки — в .env рядом с этим файлом (шаблон .env.production.example).
+name: vibe-crm-prod
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-crm}
+      POSTGRES_USER: ${POSTGRES_USER:-crm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD в .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_NAME: ${POSTGRES_DB:-crm}
+      DB_USER: ${POSTGRES_USER:-crm}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      CRM_ADMIN_LOGIN: ${CRM_ADMIN_LOGIN:?Задайте CRM_ADMIN_LOGIN в .env}
+      CRM_ADMIN_PASSWORD: ${CRM_ADMIN_PASSWORD:?Задайте CRM_ADMIN_PASSWORD в .env}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      CRM_TIMEZONE: ${CRM_TIMEZONE:-Europe/Moscow}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=UTC
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${HTTP_PORT:-80}:80"
+
+volumes:
+  postgres-data:
