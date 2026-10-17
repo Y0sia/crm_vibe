@@ -2,13 +2,15 @@
 # Выкладка CRM на VPS: собирает образы бекенда и фронтенда из ветки (по умолчанию main с GitHub),
 # отправляет их на сервер и перезапускает только backend и frontend. Postgres не трогается никогда.
 #
-#   scripts/deploy.sh            # выложить origin/main
-#   scripts/deploy.sh dev        # выложить origin/dev
+#   scripts/deploy.sh                     # выложить origin/main (с прогоном тестов)
+#   scripts/deploy.sh dev                 # выложить origin/dev
+#   scripts/deploy.sh main --skip-tests   # без тестов (только если они уже прогнаны на этом коммите)
 #
 # Переменные: DEPLOY_HOST (по умолчанию crm-vps из ~/.ssh/config), DEPLOY_DIR (/opt/crm).
 set -euo pipefail
 
 BRANCH="${1:-main}"
+SKIP_TESTS="${2:-}"
 HOST="${DEPLOY_HOST:-crm-vps}"
 DIR="${DEPLOY_DIR:-/opt/crm}"
 ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
@@ -31,6 +33,13 @@ fi
 SRC="$(mktemp -d)"
 trap 'rm -rf "$SRC"' EXIT
 git archive "origin/$BRANCH" | tar -x -C "$SRC"
+
+if [ "$SKIP_TESTS" != "--skip-tests" ]; then
+	step "Прогоняю тесты выкладываемой версии (нужен Docker)"
+	(cd "$SRC/backend" && ./mvnw -q -B verify) || { echo "Тесты бекенда не прошли — выкладка отменена"; exit 1; }
+	(cd "$SRC/frontend" && npm ci --silent && npm test --silent && npm run lint --silent) \
+		|| { echo "Тесты фронтенда не прошли — выкладка отменена"; exit 1; }
+fi
 
 step "Собираю образы под linux/amd64"
 docker buildx build -q --platform linux/amd64 -t "vibe-crm-backend:$SHA" --load "$SRC/backend"
