@@ -13,7 +13,7 @@ description: Выкладка актуальной версии CRM (бекен�
 
 - SSH: `ssh crm-vps` (алиас в `~/.ssh/config`, ключ `~/.ssh/crm_vps_ed25519`; вход по паролю отключён).
 - Приложение: `/opt/crm` — `docker-compose.yml` (копия `docker-compose.prod.yml`), `.env` с паролями
-  (только на сервере, не читать в чат и не коммитить), `DEPLOYED` — текущий коммит, `deploy.log` — история.
+  и `CRM_TAG` — версией образов (только на сервере, не читать в чат и не коммитить), `DEPLOYED` — текущий коммит, `deploy.log` — история.
 - Контейнеры (проект `vibe-crm-prod`): `postgres` (том `vibe-crm-prod_postgres-data`), `backend`, `frontend`
   (слушает только `127.0.0.1:8080`). Снаружи — nginx хоста на 80 (`deploy/nginx/crm.conf` → `/etc/nginx/sites-available/crm`).
 - Резервные копии базы: каждую ночь в 03:30 → `/opt/crm/backups` (14 дней), скрипт `deploy/backup.sh`.
@@ -57,7 +57,7 @@ description: Выкладка актуальной версии CRM (бекен�
 
 - Бекенд не стал `healthy` — скрипт печатает хвост журнала. Подробнее:
   `ssh crm-vps 'cd /opt/crm && docker compose logs --tail 100 backend'`.
-- Откат на прошлую версию (на сервере хранятся 3 последние):
+- Откат на прошлую версию (на сервере хранятся текущая и предыдущая):
   `ssh crm-vps cat /opt/crm/deploy.log`, затем `scripts/deploy-rollback.sh <коммит>`.
 - Изменился `.env.production.example` (новые переменные) — добавь их в `/opt/crm/.env` на сервере
   до выкладки, не выводя содержимое файла в чат.

@@ -51,9 +51,10 @@ scp -q "$SRC/docker-compose.prod.yml" "$HOST:$DIR/docker-compose.yml"
 
 step "Перезапускаю backend и frontend (postgres не трогаю)"
 PREV="$(ssh "$HOST" "cat $DIR/DEPLOYED 2>/dev/null || echo none")"
+# Версия записывается в .env (CRM_TAG): compose видит смену образа и пересоздаёт контейнеры,
+# а после перезагрузки сервера поднимается та же версия.
 ssh "$HOST" "set -e; cd $DIR
-	docker tag vibe-crm-backend:$SHA vibe-crm-backend:latest
-	docker tag vibe-crm-frontend:$SHA vibe-crm-frontend:latest
+	sed -i '/^CRM_TAG=/d' .env && echo CRM_TAG=$SHA >> .env
 	docker compose up -d --no-deps --no-build backend frontend"
 
 step "Жду, пока бекенд поднимется"
@@ -68,13 +69,18 @@ if [ "$status" != "healthy" ]; then
 	echo "Откат на предыдущую версию: scripts/deploy-rollback.sh $PREV"
 	exit 1
 fi
+running="$(ssh "$HOST" "cd $DIR && docker inspect -f '{{.Config.Image}}' \$(docker compose ps -q backend) \$(docker compose ps -q frontend)" | tr '\n' ' ')"
+case "$running" in
+	*"vibe-crm-backend:$SHA"*"vibe-crm-frontend:$SHA"*) ;;
+	*) echo "Контейнеры работают не на новой версии: $running"; exit 1 ;;
+esac
 code="$(ssh "$HOST" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1/api/auth/me")"
 [ "$code" = "401" ] || { echo "Сайт отвечает неожиданно: HTTP $code"; exit 1; }
 
 ssh "$HOST" "cd $DIR && echo $SHA > DEPLOYED && echo '$(date -u +%FT%TZ) $SHA origin/$BRANCH' >> deploy.log
-	# храним 3 последние версии образов для отката
+	# храним текущую и предыдущую версии (для отката) — диск у сервера маленький
 	for name in vibe-crm-backend vibe-crm-frontend; do
-		docker images \$name --format '{{.Tag}}' | grep -v latest | tail -n +4 | xargs -r -I{} docker rmi -f \$name:{} >/dev/null
+		docker images \$name --format '{{.Tag}}' | grep -vx -e latest -e $SHA -e $PREV | xargs -r -I{} docker rmi \$name:{} >/dev/null 2>&1 || true
 	done
 	docker image prune -f >/dev/null"
 

@@ -22,7 +22,7 @@ services:
 
   backend:
     build: ./backend
-    image: vibe-crm-backend:latest
+    image: vibe-crm-backend:${CRM_TAG:-latest}
     restart: unless-stopped
     # Java берёт 75% от лимита под кучу; 1 ГБ сервера делим с Postgres
     mem_limit: ${BACKEND_MEMORY:-640m}
@@ -48,7 +48,7 @@ services:
 
   frontend:
     build: ./frontend
-    image: vibe-crm-frontend:latest
+    image: vibe-crm-frontend:${CRM_TAG:-latest}
     restart: unless-stopped
     depends_on:
       - backend

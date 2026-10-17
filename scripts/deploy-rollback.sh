@@ -7,8 +7,7 @@ HOST="${DEPLOY_HOST:-crm-vps}"
 DIR="${DEPLOY_DIR:-/opt/crm}"
 ssh "$HOST" "set -e; cd $DIR
 	docker image inspect vibe-crm-backend:$SHA vibe-crm-frontend:$SHA >/dev/null
-	docker tag vibe-crm-backend:$SHA vibe-crm-backend:latest
-	docker tag vibe-crm-frontend:$SHA vibe-crm-frontend:latest
+	sed -i '/^CRM_TAG=/d' .env && echo CRM_TAG=$SHA >> .env
 	docker compose up -d --no-deps --no-build backend frontend
 	echo $SHA > DEPLOYED && echo \"\$(date -u +%FT%TZ) $SHA rollback\" >> deploy.log"
 echo "Откатились на $SHA"
