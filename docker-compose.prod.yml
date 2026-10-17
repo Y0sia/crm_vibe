@@ -1,5 +1,6 @@
-# Продакшен: база, бекенд и сайт. Запуск на сервере:
+# Продакшен: база, бекенд и сайт. Запуск со сборкой на сервере:
 #   docker compose -f docker-compose.prod.yml up -d --build
+# Наш VPS собирать не тянет (1 ГБ памяти) — туда образы привозит scripts/deploy.sh.
 # Настройки — в .env рядом с этим файлом (шаблон .env.production.example).
 name: vibe-crm-prod
 
@@ -21,7 +22,16 @@ services:
 
   backend:
     build: ./backend
+    image: vibe-crm-backend:latest
     restart: unless-stopped
+    # Java берёт 75% от лимита под кучу; 1 ГБ сервера делим с Postgres
+    mem_limit: ${BACKEND_MEMORY:-640m}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy
@@ -38,11 +48,13 @@ services:
 
   frontend:
     build: ./frontend
+    image: vibe-crm-frontend:latest
     restart: unless-stopped
     depends_on:
       - backend
     ports:
-      - "${HTTP_PORT:-80}:80"
+      # HTTP_BIND=127.0.0.1 — сайт виден только на самом сервере (за nginx хоста)
+      - "${HTTP_BIND:-0.0.0.0}:${HTTP_PORT:-80}:80"
 
 volumes:
   postgres-data:

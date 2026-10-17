@@ -1,4 +1,5 @@
-FROM node:24-alpine AS build
+# Сборка сайта не зависит от процессора — выполняется на платформе машины, где идёт сборка.
+FROM --platform=$BUILDPLATFORM node:24-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci

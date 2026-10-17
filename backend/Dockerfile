@@ -1,5 +1,6 @@
 # Сборка: тесты здесь не запускаются — им нужен Docker (Testcontainers); гоняйте ./mvnw verify до сборки образа.
-FROM eclipse-temurin:25-jdk AS build
+# Сборочный этап — на платформе машины, где идёт сборка (jar не зависит от процессора), итоговый образ — под целевую.
+FROM --platform=$BUILDPLATFORM eclipse-temurin:25-jdk AS build
 WORKDIR /app
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
