@@ -28,7 +28,7 @@ export function LoginPage() {
           <span className="brand-mark">
             <Icon name="logo" />
           </span>
-          Лиды CRM
+          CRM Leads
         </div>
         <div>
           <h1 className="page-title" style={{ fontSize: 24 }}>

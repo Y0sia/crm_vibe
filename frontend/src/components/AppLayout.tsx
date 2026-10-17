@@ -51,7 +51,7 @@ export function AppLayout() {
           <span className="brand-mark">
             <Icon name="logo" />
           </span>
-          Лиды CRM
+          CRM Leads
         </Link>
         <div className="nav-group">
           <NavLinks items={main} iconSize={18} />
@@ -78,7 +78,7 @@ export function AppLayout() {
       </nav>
 
       <header className="mobile-header">
-        <h1>{title ?? 'Лиды CRM'}</h1>
+        <h1>{title ?? 'CRM Leads'}</h1>
         <button type="button" className="icon-square" aria-label="Открыть меню" onClick={() => setMenuOpen(true)}>
           <Icon name="menu" size={22} />
         </button>
@@ -91,7 +91,7 @@ export function AppLayout() {
               <span className="brand-mark">
                 <Icon name="logo" />
               </span>
-              Лиды CRM
+              CRM Leads
             </span>
             <button type="button" className="icon-square" aria-label="Закрыть меню" onClick={() => setMenuOpen(false)}>
               <Icon name="close" size={20} />
