@@ -80,7 +80,7 @@ code="$(ssh "$HOST" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1/api
 ssh "$HOST" "cd $DIR && echo $SHA > DEPLOYED && echo '$(date -u +%FT%TZ) $SHA origin/$BRANCH' >> deploy.log
 	# храним текущую и предыдущую версии (для отката) — диск у сервера маленький
 	for name in vibe-crm-backend vibe-crm-frontend; do
-		docker images \$name --format '{{.Tag}}' | grep -vx -e latest -e $SHA -e $PREV | xargs -r -I{} docker rmi \$name:{} >/dev/null 2>&1 || true
+		docker images \$name --format '{{.Tag}}' | grep -vx -e $SHA -e $PREV | xargs -r -I{} docker rmi \$name:{} >/dev/null 2>&1 || true
 	done
 	docker image prune -f >/dev/null"
 
