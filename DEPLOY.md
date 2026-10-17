@@ -57,7 +57,7 @@ gunzip -c backup.sql.gz | docker compose -f docker-compose.prod.yml exec -T post
 
 Сайт работает по HTTP на 80 порту. Для домена с HTTPS поставьте перед ним обратный прокси с автоматическими сертификатами (например, Caddy или nginx + certbot), а `HTTP_PORT` переключите на внутренний порт, например `8080`. Бекенд учитывает заголовок `X-Forwarded-Proto`, поэтому cookie входа при HTTPS автоматически станут `Secure`.
 
-## Наш VPS (91.228.153.163)
+## Наш VPS: https://yosia.ru (91.228.153.163)
 
 Выкладка — `scripts/deploy.sh` (в Claude Code — скилл `deploy`): образы собираются локально под
 `linux/amd64` и отправляются на сервер, перезапускаются только `backend` и `frontend`, база не трогается.
@@ -67,7 +67,8 @@ gunzip -c backup.sql.gz | docker compose -f docker-compose.prod.yml exec -T post
 
 - вход по SSH только по ключу (`ssh crm-vps`, ключ `~/.ssh/crm_vps_ed25519`), fail2ban на SSH;
 - ufw: открыты 22, 80, 443; база и бекенд наружу не опубликованы, контейнер сайта слушает `127.0.0.1:8080`;
-- nginx хоста (`deploy/nginx/crm.conf`) принимает всё на 80 и проксирует в контейнер сайта;
+- nginx хоста (`deploy/nginx/crm.conf`) обслуживает https://yosia.ru и проксирует в контейнер сайта; HTTP, `www` и запросы по IP переадресуются на `https://yosia.ru`;
+- сертификат Let's Encrypt для `yosia.ru` и `www.yosia.ru` (certbot, webroot `/var/www/certbot`), продлевается `certbot.timer`, после продления nginx перезагружается хуком `/etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh`. Почта при регистрации не указана — уведомлений о проблемах с продлением не будет;
 - Docker и контейнеры (`restart: unless-stopped`) поднимаются сами после перезагрузки, данные базы — в томе `vibe-crm-prod_postgres-data`;
 - swap 2 ГБ, журналы Docker ограничены 3×10 МБ на контейнер, автоматические обновления безопасности;
 - резервная копия базы каждую ночь в 03:30 → `/opt/crm/backups` (хранится 14 дней), `deploy/backup.sh`.

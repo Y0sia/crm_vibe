@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `backend/` — Spring Boot 4.1 (Java 25, Maven wrapper), Spring Web MVC, Data JPA, Liquibase, Actuator, Lombok. Пакет `com.vibe.crm`.
 - `frontend/` — React 19 + TypeScript, Vite, React Router 8 (`RouterProvider` из `react-router/dom`), TanStack Query 5, Vitest, линтер oxlint. Без UI-библиотек: стили по `design.html` в `src/styles/app.css` и `*.css` рядом со страницами.
 - `docker-compose.yml` — PostgreSQL 18 для разработки, compose-проект `vibe-crm`, контейнер `vibe-crm-postgres`.
-- `docker-compose.prod.yml` — продакшен (проект `vibe-crm-prod`): postgres + backend (`backend/Dockerfile`) + frontend на nginx (`frontend/Dockerfile`, `frontend/nginx.conf` проксирует `/api`, SSE без буферизации). Развёртывание — `DEPLOY.md`, настройки — `.env.production.example`. Прод — VPS `ssh crm-vps`, выкладка только через скилл `.claude/skills/deploy` (`scripts/deploy.sh`), postgres на сервере не трогать.
+- `docker-compose.prod.yml` — продакшен (проект `vibe-crm-prod`): postgres + backend (`backend/Dockerfile`) + frontend на nginx (`frontend/Dockerfile`, `frontend/nginx.conf` проксирует `/api`, SSE без буферизации). Развёртывание — `DEPLOY.md`, настройки — `.env.production.example`. Прод — https://yosia.ru (VPS `ssh crm-vps`), выкладка только через скилл `.claude/skills/deploy` (`scripts/deploy.sh`), postgres на сервере не трогать.
 
 Spring Boot 4 отличается от 3.x: стартеры модульные (`spring-boot-starter-webmvc`, `spring-boot-starter-liquibase`, у каждого свой `*-test`), пакеты автоконфигурации переехали. Не переноси код и зависимости из примеров для Boot 3 без проверки.
 

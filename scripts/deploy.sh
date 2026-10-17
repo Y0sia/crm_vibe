@@ -74,7 +74,8 @@ case "$running" in
 	*"vibe-crm-backend:$SHA"*"vibe-crm-frontend:$SHA"*) ;;
 	*) echo "Контейнеры работают не на новой версии: $running"; exit 1 ;;
 esac
-code="$(ssh "$HOST" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1/api/auth/me")"
+# напрямую в контейнер сайта (nginx хоста на 80 отвечает переадресацией на HTTPS)
+code="$(ssh "$HOST" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/auth/me")"
 [ "$code" = "401" ] || { echo "Сайт отвечает неожиданно: HTTP $code"; exit 1; }
 
 ssh "$HOST" "cd $DIR && echo $SHA > DEPLOYED && echo '$(date -u +%FT%TZ) $SHA origin/$BRANCH' >> deploy.log

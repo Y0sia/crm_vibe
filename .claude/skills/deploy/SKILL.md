@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: Выкладка актуальной версии CRM (бекенд и фронтенд) на продакшен-VPS 91.228.153.163. Используй этот скилл ВСЕГДА, когда пользователь просит задеплоить, выложить, обновить сервер/прод/сайт, «залить на VPS», «обнови на сервере», «выкати», — а также откатить версию на сервере. Postgres при этом не трогается никогда.
+description: Выкладка актуальной версии CRM (бекенд и фронтенд) на продакшен https://yosia.ru (VPS 91.228.153.163). Используй этот скилл ВСЕГДА, когда пользователь просит задеплоить, выложить, обновить сервер/прод/сайт, «залить на VPS», «обнови на сервере», «выкати», — а также откатить версию на сервере. Postgres при этом не трогается никогда.
 ---
 
 # Деплой CRM на VPS
@@ -15,7 +15,8 @@ description: Выкладка актуальной версии CRM (бекен�
 - Приложение: `/opt/crm` — `docker-compose.yml` (копия `docker-compose.prod.yml`), `.env` с паролями
   и `CRM_TAG` — версией образов (только на сервере, не читать в чат и не коммитить), `DEPLOYED` — текущий коммит, `deploy.log` — история.
 - Контейнеры (проект `vibe-crm-prod`): `postgres` (том `vibe-crm-prod_postgres-data`), `backend`, `frontend`
-  (слушает только `127.0.0.1:8080`). Снаружи — nginx хоста на 80 (`deploy/nginx/crm.conf` → `/etc/nginx/sites-available/crm`).
+  (слушает только `127.0.0.1:8080`). Снаружи — nginx хоста (`deploy/nginx/crm.conf` → `/etc/nginx/sites-available/crm`):
+  https://yosia.ru, HTTP/www/IP переадресуются на него. Сертификат Let's Encrypt продлевает `certbot.timer`.
 - Резервные копии базы: каждую ночь в 03:30 → `/opt/crm/backups` (14 дней), скрипт `deploy/backup.sh`.
 - Открыты только 22, 80, 443 (ufw); fail2ban на SSH.
 
@@ -46,8 +47,8 @@ description: Выкладка актуальной версии CRM (бекен�
    Если тесты не прошли — выкладка отменяется, доложи причину.
 4. **Проверка после выкладки:**
    ```bash
-   curl -s -o /dev/null -w '%{http_code}\n' http://91.228.153.163/            # 200
-   curl -s -o /dev/null -w '%{http_code}\n' http://91.228.153.163/api/auth/me  # 401
+   curl -s -o /dev/null -w '%{http_code}\n' https://yosia.ru/            # 200
+   curl -s -o /dev/null -w '%{http_code}\n' https://yosia.ru/api/auth/me  # 401
    ssh crm-vps 'cd /opt/crm && docker compose ps && cat DEPLOYED'
    ```
 5. **Отчёт пользователю** простыми словами: какая версия выложена (коммит и его описание), что
